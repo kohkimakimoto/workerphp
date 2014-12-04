@@ -21,6 +21,5 @@
         "psr-0": {
             "Kohkimakimoto\\Worker": "src/"
         }
-    },
-    "bin": ["bin/worker"]
+    }
 }
