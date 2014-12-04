@@ -45,3 +45,4 @@ Kohki Makimoto <kohki.makimoto@gmail.com>
 ## License
 
 MIT license.
+
