@@ -1,6 +1,6 @@
 {
     "name": "kohkimakimoto/workerphp",
-    "description": "A micro job scheduler framework.",
+    "description": "A PHP micro job scheduler framework like cron.",
     "homepage": "https://github.com/kohkimakimoto/workerphp",
     "license": "MIT",
     "authors": [{
@@ -19,7 +19,7 @@
     },
     "autoload": {
         "psr-0": {
-            "Kohkimakimoto\\": "src/"
+            "Kohkimakimoto\\Worker": "src/"
         }
     },
     "bin": ["bin/worker"]
