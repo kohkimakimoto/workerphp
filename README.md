@@ -1,5 +1,7 @@
 # WorkerPHP
 
+[![Build Status](https://travis-ci.org/kohkimakimoto/workerphp.svg?branch=master)](https://travis-ci.org/kohkimakimoto/workerphp)
+
 A PHP micro job scheduler framework like cron.
 
 ```php
