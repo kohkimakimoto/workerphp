@@ -1,0 +1,10 @@
+/vendor
+/tmp
+/composer.phar
+/.project
+/build
+.DS_Store
+Thumbs.db
+.tags
+.tags_sorted_by_file
+._*

@@ -1,0 +1,26 @@
+{
+    "name": "kohkimakimoto/workerphp",
+    "description": "A micro job scheduler framework.",
+    "homepage": "https://github.com/kohkimakimoto/workerphp",
+    "license": "MIT",
+    "authors": [{
+        "name": "Kohki Makimoto",
+        "email": "kohki.makimoto@gmail.com"
+    }],
+    "require": {
+        "ext-pcntl": "*",
+        "mtdowling/cron-expression": "1.0.*",
+        "symfony/console": "2.6.*",
+        "symfony/process": "2.6.*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.*",
+        "fabpot/php-cs-fixer": "@stable"
+    },
+    "autoload": {
+        "psr-0": {
+            "Kohkimakimoto\\": "src/"
+        }
+    },
+    "bin": ["bin/worker"]
+}
