@@ -71,10 +71,10 @@ $worker->job("* * * * *", function(){
 });
 ```
 
-This is a job definition. `$worker->job` method has two arguments. The first is a schedule when the job runs. it is a string that is "cron expressions".
+This is a job definition. `$worker->job` method has two arguments. The first is a schedule when to run the job. It is a "cron expressions" string.
 The second is a closure that is code executed by the worker.
 
-So, you can run it. you will get like the below.
+You can run it. You will get messages like the below.
 
 ```
 $ php worker.php
