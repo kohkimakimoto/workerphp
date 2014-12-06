@@ -1,25 +1,23 @@
 <?php
 namespace Kohkimakimoto\Worker;
 
-use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
 use DateTime;
 
 /**
  * Worker
  */
-class Worker extends Application
+class Worker
 {
     const DEFAULT_APP_NAME = 'WorkerPHP';
 
-    public $input;
-
-    public $output;
-
     protected $name;
+
+    protected $output;
+
+    protected $isDebug;
 
     protected $options;
 
@@ -31,42 +29,10 @@ class Worker extends Application
 
     public function __construct($options = array())
     {
-        parent::__construct();
         $this->isMaster = true;
         $this->finished = false;
         $this->options = $options;
-    }
-
-    protected function getCommandName(InputInterface $input)
-    {
-        return 'worker';
-    }
-
-    protected function getDefaultCommands()
-    {
-        return array(new WorkerCommand());
-    }
-
-    public function getDefinition()
-    {
-        $inputDefinition = parent::getDefinition();
-        // clear out the normal first argument, which is the command name
-        $inputDefinition->setArguments();
-
-        return $inputDefinition;
-    }
-
-    public function start()
-    {
-        return $this->run(new ArrayInput(array()), null);
-    }
-
-    public function doStart(InputInterface $input, OutputInterface $output)
-    {
-        register_shutdown_function(array($this, "shutdown"));
-        declare (ticks = 1);
-        pcntl_signal(SIGTERM, array($this, "signalHandler"));
-        pcntl_signal(SIGINT, array($this, "signalHandler"));
+        $this->output = new ConsoleOutput();
 
         if (isset($this->options["name"])) {
             $this->name = $this->options["name"];
@@ -75,13 +41,20 @@ class Worker extends Application
         }
 
         if (isset($this->options["is_debug"]) && $this->options["is_debug"]) {
-            $output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+            $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
+    }
 
-        $this->input = $input;
-        $this->output = $output;
+    public function start()
+    {
+        declare (ticks = 1);
+
+        register_shutdown_function(array($this, "shutdown"));
+        pcntl_signal(SIGTERM, array($this, "signalHandler"));
+        pcntl_signal(SIGINT, array($this, "signalHandler"));
 
         $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
+
         // All registered jobs is initialized.
         foreach ($this->jobs as $id => $job) {
             $this->output->writeln("<info>Initializing a job.</info> (job_id: <comment>$id</comment>)");
