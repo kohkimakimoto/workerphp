@@ -31,8 +31,9 @@ class Job
 
     protected $schedule;
 
-    public function __construct($schedule, $command)
+    public function __construct($id, $schedule, $command)
     {
+        $this->id = $id;
         $this->command = $command;
         $this->schedule = $schedule;
     }

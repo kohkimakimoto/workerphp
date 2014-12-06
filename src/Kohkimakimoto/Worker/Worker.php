@@ -231,8 +231,8 @@ class Worker
      */
     public function job($schedule, $command)
     {
-        $this->jobs[] = new Job($schedule, $command);
-
+        $id = count($this->jobs);
+        $this->jobs[$id] = new Job($id, $schedule, $command);
         return $this;
     }
 }
