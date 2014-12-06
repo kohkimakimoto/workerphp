@@ -27,6 +27,11 @@ class Worker
 
     protected $isMaster;
 
+    /**
+     * Constructor.
+     *
+     * @param array $options configuration parameters.
+     */
     public function __construct($options = array())
     {
         $this->isMaster = true;
@@ -45,6 +50,11 @@ class Worker
         }
     }
 
+    /**
+     * Starts running worker.
+     *
+     * @return void
+     */
     public function start()
     {
         declare (ticks = 1);
@@ -161,11 +171,11 @@ class Worker
         }
     }
 
-    public function getName()
-    {
-        return $this->name;
-    }
-
+    /**
+     * Signal handler
+     * @param  int $signo
+     * @return void
+     */
     public function signalHandler($signo)
     {
         switch ($signo) {
@@ -181,6 +191,10 @@ class Worker
         }
     }
 
+    /**
+     * Shoutdown process.
+     * @return void
+     */
     public function shutdown()
     {
         if ($this->isMaster && !$this->finished) {
@@ -199,15 +213,25 @@ class Worker
     }
 
     /**
+     * Gets an application name.
+     *
+     * @return string name
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
      * Registers a job.
      *
-     * @param  [type] $params  [description]
-     * @param  [type] $command [description]
-     * @return [type] [description]
+     * @param  string $schedule
+     * @param  [type] $command
+     * @return Kohkimakimoto\Worker\Worker
      */
-    public function job($params, $command)
+    public function job($schedule, $command)
     {
-        $this->jobs[] = new Job($params, $command);
+        $this->jobs[] = new Job($schedule, $command);
 
         return $this;
     }
