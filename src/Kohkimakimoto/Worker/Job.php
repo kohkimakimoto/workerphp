@@ -9,6 +9,8 @@ use DateTime;
  */
 class Job
 {
+    protected $id;
+
     protected $command;
 
     protected $lastRunTime;
@@ -43,17 +45,7 @@ class Job
         $this->lastRunTime = new DateTime();
         $this->worker = $worker;
         $this->cronExpression = CronExpression::factory($this->schedule);
-
         $this->updateNextRunTime();
-    }
-
-    public function locked()
-    {
-        if (!$this->lockFile) {
-            return false;
-        }
-
-        return file_exists($this->lockFile);
     }
 
     public function lock()
@@ -67,6 +59,30 @@ class Job
             unlink($this->lockFile);
             $this->lockFile = null;
         }
+    }
+
+    /**
+     * Determin if the job is locked.
+     *
+     * @return boolean
+     */
+    public function locked()
+    {
+        if (!$this->lockFile) {
+            return false;
+        }
+
+        return file_exists($this->lockFile);
+    }
+
+    public function updateNextRunTime()
+    {
+        $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
+    }
+
+    public function getId()
+    {
+        return $this->id;
     }
 
     public function getLockFile()
@@ -102,10 +118,5 @@ class Job
     public function getCommand()
     {
         return $this->command;
-    }
-
-    public function updateNextRunTime()
-    {
-        $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
     }
 }

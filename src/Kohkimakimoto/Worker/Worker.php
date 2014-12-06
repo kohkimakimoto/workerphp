@@ -74,8 +74,8 @@ class Worker
 
         // Inifinite loop to keep running.
         while (true) {
-            foreach ($this->jobs as $id => $job) {
-                $this->fireJobIfNeeded($id, $job);
+            foreach ($this->jobs as $job) {
+                $this->fireJobIfNeeded($job);
             }
 
             sleep(1);
@@ -89,8 +89,10 @@ class Worker
      * @param  [type] $job [description]
      * @return [type] [description]
      */
-    public function fireJobIfNeeded($id, $job)
+    public function fireJobIfNeeded($job)
     {
+        $id = $job->getId();
+
         if ($job->locked()) {
             if ($this->output->isDebug()) {
                 $this->output->writeln("Skipped: The job is already run (job_id: $id)");
@@ -233,6 +235,7 @@ class Worker
     {
         $id = count($this->jobs);
         $this->jobs[$id] = new Job($id, $schedule, $command);
+
         return $this;
     }
 }
