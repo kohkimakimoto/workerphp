@@ -45,12 +45,10 @@ class Job
         if (is_string($command)) {
             // Command line string.
             $this->command = $command;
-
-        } else if ($command instanceof \Closure) {
+        } elseif ($command instanceof \Closure) {
             // Closure code.
             $this->command = $command;
-
-        } else if (is_array($command)) {
+        } elseif (is_array($command)) {
             // array
             if (isset($command["onTick"])) {
                 $this->command = $command["onTick"];
@@ -59,7 +57,6 @@ class Job
             if (isset($command["cronTime"])) {
                 $this->cronTime = $command["cronTime"];
             }
-
         } else {
             throw new \InvalidArgumentException("Unsupported type of 'command'.");
         }
@@ -75,7 +72,7 @@ class Job
     {
         return $this->name;
     }
-    
+
     public function hasCronTime()
     {
         if ($this->cronTime) {
