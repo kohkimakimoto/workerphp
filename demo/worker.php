@@ -14,16 +14,6 @@ $worker->job("* * * * *", function(){
 $worker->job("* * * * *", "uptime");;
 */
 
-$worker->job("hello1", function(){
-
-
-});
-
-$worker->job("hello2", ['cronTime' => '* * * * *', 'onTick' => function(){
-
-    echo "hello\n";
-
-}]);
-
+$worker->job("hello", ['cronTime' => '* * * * *', 'onTick' => "uptime"]);
 
 $worker->start();
