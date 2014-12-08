@@ -21,7 +21,7 @@ $worker->job("uptime", ['cronTime' => '10 * * * *', 'onTick' => "uptime"]);
 $worker->start();
 ```
 
-***This software is in development stage!***
+***This software is in development stage! You shouldn't use it in your real products.***
 
 ## Requirements
 
