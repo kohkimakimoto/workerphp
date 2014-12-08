@@ -11,14 +11,12 @@ require_once __DIR__.'/vendor/autoload.php';
 $worker = new \Kohkimakimoto\Worker\Worker();
 
 // job for every minute.
-$worker->job("* * * * *", function(){
-
-    // your code.
-
+$worker->job("hello", ['cronTime' => '* * * * *', 'onTick' => function(){
+    echo "Hello world\n";
 });
 
-// job runs command.
-$worker->job("10 * * * *", "echo Hello world");;
+// job runs a shell command.
+$worker->job("uptime", ['cronTime' => '10 * * * *', 'onTick' => "uptime"]);
 
 $worker->start();
 ```
