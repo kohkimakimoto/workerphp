@@ -1,25 +1,26 @@
 <?php
 namespace Kohkimakimoto\Worker;
 
-use Symfony\Component\Console\Application;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\ArrayInput;
 use Symfony\Component\Console\Output\OutputInterface;
+use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
+use React\EventLoop\Factory;
+use React\Http\Server as ReactHttpServer;
+use React\Socket\Server as ReactSocketServer;
 use DateTime;
 
 /**
  * Worker
  */
-class Worker extends Application
+class Worker
 {
     const DEFAULT_APP_NAME = 'WorkerPHP';
 
-    public $input;
-
-    public $output;
-
     protected $name;
+
+    protected $output;
+
+    protected $isDebug;
 
     protected $options;
 
@@ -29,44 +30,21 @@ class Worker extends Application
 
     protected $isMaster;
 
+    protected $eventLoop;
+
+    protected $httpServer;
+
+    /**
+     * Constructor.
+     *
+     * @param array $options configuration parameters.
+     */
     public function __construct($options = array())
     {
-        parent::__construct();
         $this->isMaster = true;
         $this->finished = false;
         $this->options = $options;
-    }
-
-    protected function getCommandName(InputInterface $input)
-    {
-        return 'worker';
-    }
-
-    protected function getDefaultCommands()
-    {
-        return array(new WorkerCommand());
-    }
-
-    public function getDefinition()
-    {
-        $inputDefinition = parent::getDefinition();
-        // clear out the normal first argument, which is the command name
-        $inputDefinition->setArguments();
-
-        return $inputDefinition;
-    }
-
-    public function start()
-    {
-        return $this->run(new ArrayInput(array()), null);
-    }
-
-    public function doStart(InputInterface $input, OutputInterface $output)
-    {
-        register_shutdown_function(array($this, "shutdown"));
-        declare (ticks = 1);
-        pcntl_signal(SIGTERM, array($this, "signalHandler"));
-        pcntl_signal(SIGINT, array($this, "signalHandler"));
+        $this->output = new ConsoleOutput();
 
         if (isset($this->options["name"])) {
             $this->name = $this->options["name"];
@@ -75,62 +53,81 @@ class Worker extends Application
         }
 
         if (isset($this->options["is_debug"]) && $this->options["is_debug"]) {
-            $output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+            $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
 
-        $this->input = $input;
-        $this->output = $output;
-
-        $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
-        // All registered jobs is initialized.
-        foreach ($this->jobs as $id => $job) {
-            $this->output->writeln("<info>Initializing a job.</info> (job_id: <comment>$id</comment>)");
-            $job->init($this);
-        }
-        $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
-
-        // Inifinite loop to keep running.
-        while (true) {
-            foreach ($this->jobs as $id => $job) {
-                $this->fireJobIfNeeded($id, $job);
-            }
-
-            sleep(1);
-            clearstatcache();
-        }
+        $this->eventLoop = Factory::create();
+//        $socketServer = new ReactSocketServer($this->eventLoop);
+//        $httpServer = new ReactHttpServer($socketServer);
     }
 
     /**
-     * Runs a job if it is needed.
+     * Starts running worker.
      *
-     * @param  [type] $job [description]
-     * @return [type] [description]
+     * @return void
      */
-    public function fireJobIfNeeded($id, $job)
+    public function start()
     {
-        if ($job->locked()) {
-            if ($this->output->isDebug()) {
-                $this->output->writeln("Skipped: The job is already run (job_id: $id)");
+        declare (ticks = 1);
+
+        register_shutdown_function(array($this, "shutdown"));
+        pcntl_signal(SIGTERM, array($this, "signalHandler"));
+        pcntl_signal(SIGINT, array($this, "signalHandler"));
+
+        $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
+
+        // All registered jobs is initialized.
+        $bootTime = new DateTime();
+        foreach ($this->jobs as $job) {
+            $this->output->writeln("<info>Initializing job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$job->getId()."</comment>)");
+            $job->setLastRunTime($bootTime);
+
+            if ($job->hasCronTime()) {
+                $this->addJobAsTimer($job);
+            }
+        }
+
+        $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
+
+        // A dummy timer to keep a process on a system.
+        $this->eventLoop->addPeriodicTimer(10, function () {});
+
+        // Start event loop.
+        $this->eventLoop->run();
+    }
+
+    protected function addJobAsTimer($job)
+    {
+        $job->updateNextRunTime();
+        $worker = $this;
+        $secondsOfTimer = $job->secondsUntilNextRuntime();
+        $this->eventLoop->addTimer($secondsOfTimer, function () use ($job, $worker) {
+
+            $id = $job->getId();
+            $output = $worker->output;
+
+            $now = new DateTime();
+
+            if ($output->isDebug()) {
+                $output->writeln("[debug] Try running a job: (job_id: $id) at ".$now->format('Y-m-d H:i:s'));
             }
 
-            return;
-        }
+            if ($job->locked()) {
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Skipped: The job is already run (job_id: $id)");
+                }
 
-        $now = new DateTime();
+                // add next timer
+                $job->setLastRunTime($now);
+                $worker->addJobAsTimer($job);
 
-        if ($this->output->isDebug()) {
-            $this->output->write("Time: (now: ".$now->format('Y-m-d H:i:s').") ");
-            $this->output->writeln("(next run time: ".$job->getNextRunTime()->format('Y-m-d H:i:s').") (job_id: ".$id.")");
-        }
+                return;
+            }
 
-        if ($job->isReadyToRun($now)) {
             $job->lock();
-            if ($this->output->isDebug()) {
-                $this->output->writeln("Job lock: create file '".$job->getLockFile()."' (job_id: $id).");
+            if ($output->isDebug()) {
+                $output->writeln("[debug] Job lock: create file '".$job->getLockFile()."' (job_id: $id).");
             }
-
-            $job->setLastRunTime(new DateTime());
-            $job->updateNextRunTime();
 
             $pid = pcntl_fork();
             if ($pid === -1) {
@@ -138,61 +135,54 @@ class Worker extends Application
                 throw new \RuntimeException("Fork Error.");
             } elseif ($pid) {
                 // Parent process
-                $this->childPids[$pid] = $job;
+                $worker->childPids[$pid] = $job;
+
+                // add next timer
+                $job->setLastRunTime($now);
+                $worker->addJobAsTimer($job);
             } else {
-                // Child process
-                $this->isMaster = false;
-                if ($this->output->isDebug()) {
-                    $this->output->writeln("Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
+                $worker->isMaster = false;
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
                 }
 
                 $command = $job->getCommand();
-                $this->output->writeln("<info>Running a job.</info> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
+                $output->writeln("<info>Running job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
 
                 if ($command instanceof \Closure) {
                     // command is a closure
-                    $status = call_user_func($command, $this);
-
-                    $file = $job->getLockFile();
-                    $job->unlock();
-                    if ($this->output->isDebug()) {
-                        $this->output->writeln("Job unlock: removed file '".$file."' (job_id: $id).");
-                    }
-
-                    exit($status);
+                    call_user_func($command, $worker);
                 } elseif (is_string($command)) {
                     // command is a string
                     $process = new Process($command);
                     $process->setTimeout(null);
-                    $output = $this->output;
-                    $status = $process->run(function ($type, $buffer) use ($output) {
+
+                    $process->run(function ($type, $buffer) use ($output) {
                         $output->write($buffer);
                     });
-
-                    $file = $job->getLockFile();
-                    $job->unlock();
-                    if ($this->output->isDebug()) {
-                        $this->output->writeln("Job unlock: removed file '".$file."' (job_id: $id).");
-                    }
-
-                    exit($status);
                 } else {
                     throw new \RuntimeException("Unsupported operation.");
                 }
+
+                $file = $job->getLockFile();
+                $job->unlock();
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
+                }
+                exit;
             }
-        } else {
-            if ($this->output->isDebug()) {
-                $this->output->write("Skipped: The job is not ready to run (job_id: ".$id.")");
-                $this->output->writeln(" schedule: (".$job->getSchedule().")");
-            }
+        });
+
+        if ($this->output->isDebug()) {
+            $this->output->writeln("[debug] Added new timer: '".$job->getNextRunTime()->format('Y-m-d H:i:s')."' (after ".$secondsOfTimer." seconds) (job_id: ".$job->getId().").");
         }
     }
 
-    public function getName()
-    {
-        return $this->name;
-    }
-
+    /**
+     * Signal handler
+     * @param  int  $signo
+     * @return void
+     */
     public function signalHandler($signo)
     {
         switch ($signo) {
@@ -208,6 +198,10 @@ class Worker extends Application
         }
     }
 
+    /**
+     * Shoutdown process.
+     * @return void
+     */
     public function shutdown()
     {
         if ($this->isMaster && !$this->finished) {
@@ -216,7 +210,7 @@ class Worker extends Application
                     $file = $job->getLockFile();
                     $job->unlock();
                     if ($this->output->isDebug()) {
-                        $this->output->writeln("Job unlock: removed file '".$file."' (job_id: $id).");
+                        $this->output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
                     }
                 }
             }
@@ -226,16 +220,32 @@ class Worker extends Application
     }
 
     /**
-     * Registers a job.
+     * Gets an application name.
      *
-     * @param  [type] $params  [description]
-     * @param  [type] $command [description]
-     * @return [type] [description]
+     * @return string name
      */
-    public function job($params, $command)
+    public function getName()
     {
-        $this->jobs[] = new Job($params, $command);
+        return $this->name;
+    }
+
+    public function job($name, $command)
+    {
+        // checks if the same name exists.
+        foreach ($this->jobs as $job) {
+            if ($job->getName() == $name) {
+                throw new \InvalidArgumentException("'$name' is already registered as a job.");
+            }
+        }
+
+        $id = count($this->jobs);
+        $this->jobs[$id] = new Job($id, $name, $command, $this);
 
         return $this;
+    }
+
+    public function httpServer($httpServer)
+    {
+        $this->httpServer = $httpServer;
     }
 }

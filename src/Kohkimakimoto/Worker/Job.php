@@ -9,6 +9,10 @@ use DateTime;
  */
 class Job
 {
+    protected $id;
+
+    protected $name;
+
     protected $command;
 
     protected $lastRunTime;
@@ -29,30 +33,53 @@ class Job
 
     protected $worker;
 
-    protected $schedule;
+    protected $eventLoop;
 
-    public function __construct($schedule, $command)
+    protected $cronTime;
+
+    public function __construct($id, $name, $command, $worker)
     {
-        $this->command = $command;
-        $this->schedule = $schedule;
-    }
+        $this->id = $id;
+        $this->name = $name;
 
-    public function init(Worker $worker)
-    {
-        $this->lastRunTime = new DateTime();
-        $this->worker = $worker;
-        $this->cronExpression = CronExpression::factory($this->schedule);
+        if (is_string($command)) {
+            // Command line string.
+            $this->command = $command;
+        } elseif ($command instanceof \Closure) {
+            // Closure code.
+            $this->command = $command;
+        } elseif (is_array($command)) {
+            // array
+            if (isset($command["onTick"])) {
+                $this->command = $command["onTick"];
+            }
 
-        $this->updateNextRunTime();
-    }
-
-    public function locked()
-    {
-        if (!$this->lockFile) {
-            return false;
+            if (isset($command["cronTime"])) {
+                $this->cronTime = $command["cronTime"];
+            }
+        } else {
+            throw new \InvalidArgumentException("Unsupported type of 'command'.");
         }
 
-        return file_exists($this->lockFile);
+        if ($this->cronTime) {
+            $this->cronExpression = CronExpression::factory($this->cronTime);
+        }
+
+        $this->worker = $worker;
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function hasCronTime()
+    {
+        if ($this->cronTime) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function lock()
@@ -68,19 +95,47 @@ class Job
         }
     }
 
+    /**
+     * Determin if the job is locked.
+     *
+     * @return boolean
+     */
+    public function locked()
+    {
+        if (!$this->lockFile) {
+            return false;
+        }
+
+        return file_exists($this->lockFile);
+    }
+
+    public function updateNextRunTime()
+    {
+        $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
+    }
+
+    public function secondsUntilNextRuntime($from = null)
+    {
+        if (!$from) {
+            $from = new DateTime();
+        }
+
+        $ret = $this->nextRunTime->getTimestamp() - $from->getTimestamp();
+        if ($ret < 0) {
+            $ret = 0;
+        }
+
+        return $ret;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
     public function getLockFile()
     {
         return $this->lockFile;
-    }
-
-    public function getSchedule()
-    {
-        return $this->schedule;
-    }
-
-    public function isReadyToRun($date)
-    {
-        return ($this->nextRunTime <= $date);
     }
 
     public function setLastRunTime($lastRunTime)
@@ -101,10 +156,5 @@ class Job
     public function getCommand()
     {
         return $this->command;
-    }
-
-    public function updateNextRunTime()
-    {
-        $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
     }
 }

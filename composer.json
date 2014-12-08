@@ -8,8 +8,10 @@
         "email": "kohki.makimoto@gmail.com"
     }],
     "require": {
+        "php": ">=5.4.0",
         "ext-pcntl": "*",
         "mtdowling/cron-expression": "1.0.*",
+        "react/http": "0.4.*",
         "symfony/console": "2.6.*",
         "symfony/process": "2.6.*"
     },
