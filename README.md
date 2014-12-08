@@ -13,7 +13,7 @@ $worker = new \Kohkimakimoto\Worker\Worker();
 // job for every minute.
 $worker->job("hello", ['cronTime' => '* * * * *', 'onTick' => function(){
     echo "Hello world\n";
-});
+}]);
 
 // job runs a shell command.
 $worker->job("uptime", ['cronTime' => '10 * * * *', 'onTick' => "uptime"]);
@@ -74,7 +74,7 @@ Define a job before line of `$worker->start()`.
 ```php
 $worker->job("hello", ['cronTime' => '* * * * *', 'onTick' => function(){
     echo "Hello world\n";
-});
+}]);
 ```
 
 This is a job definition. `$worker->job` method has two arguments. The first is a name of job. It must be unique in all jobs. The second is an array that has some parameters for the job. `cronTime` is a schedule when to run the job. It is a "cron expressions" string. `onTick` is a closure that is executed by the worker.
