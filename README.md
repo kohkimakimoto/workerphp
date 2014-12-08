@@ -90,7 +90,7 @@ hello
 
 The job you defined runs every minute.
 
-Also you can define a job with a command string not a closure.
+Also you can define `onTick` a command string not a closure.
 
 ```php
 $worker->job("uptime", ['cronTime' => '* * * * *', 'onTick' => "uptime"]);
