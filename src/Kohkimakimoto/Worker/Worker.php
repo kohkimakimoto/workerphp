@@ -32,7 +32,7 @@ class Worker
 
     protected $eventLoop;
 
-    protected $lockDelay;
+    protected $httpServer;
 
     /**
      * Constructor.
@@ -79,9 +79,12 @@ class Worker
         // All registered jobs is initialized.
         $bootTime = new DateTime();
         foreach ($this->jobs as $job) {
-            $this->output->writeln("<info>Initializing a job.</info> (job_id: <comment>".$job->getId()."</comment>)");
+            $this->output->writeln("<info>Initializing job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$job->getId()."</comment>)");
             $job->setLastRunTime($bootTime);
-            $this->addJobAsTimer($job);
+
+            if ($job->hasCronTime()) {
+                $this->addJobAsTimer($job);
+            }
         }
 
         $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
@@ -144,7 +147,7 @@ class Worker
                 }
 
                 $command = $job->getCommand();
-                $output->writeln("<info>Running a job.</info> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
+                $output->writeln("<info>Running job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
 
                 if ($command instanceof \Closure) {
                     // command is a closure
@@ -226,18 +229,23 @@ class Worker
         return $this->name;
     }
 
-    /**
-     * Registers a job.
-     *
-     * @param  string                      $schedule
-     * @param  [type]                      $command
-     * @return Kohkimakimoto\Worker\Worker
-     */
-    public function job($schedule, $command)
+    public function job($name, $command)
     {
+        // checks if the same name exists.
+        foreach ($this->jobs as $job) {
+            if ($job->getName() == $name) {
+                throw new \InvalidArgumentException("'$name' is already registered as a job.");
+            }
+        }
+
         $id = count($this->jobs);
-        $this->jobs[$id] = new Job($id, $schedule, $command, $this);
+        $this->jobs[$id] = new Job($id, $name, $command, $this);
 
         return $this;
+    }
+
+    public function httpServer($httpServer)
+    {
+        $this->httpServer = $httpServer;
     }
 }

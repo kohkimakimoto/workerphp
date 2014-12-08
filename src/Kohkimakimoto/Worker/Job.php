@@ -11,6 +11,8 @@ class Job
 {
     protected $id;
 
+    protected $name;
+
     protected $command;
 
     protected $lastRunTime;
@@ -33,15 +35,54 @@ class Job
 
     protected $eventLoop;
 
-    protected $schedule;
+    protected $cronTime;
 
-    public function __construct($id, $schedule, $command, $worker)
+    public function __construct($id, $name, $command, $worker)
     {
         $this->id = $id;
-        $this->command = $command;
-        $this->schedule = $schedule;
-        $this->cronExpression = CronExpression::factory($this->schedule);
+        $this->name = $name;
+
+        if (is_string($command)) {
+            // Command line string.
+            $this->command = $command;
+
+        } else if ($command instanceof \Closure) {
+            // Closure code.
+            $this->command = $command;
+
+        } else if (is_array($command)) {
+            // array
+            if (isset($command["onTick"])) {
+                $this->command = $command["onTick"];
+            }
+
+            if (isset($command["cronTime"])) {
+                $this->cronTime = $command["cronTime"];
+            }
+
+        } else {
+            throw new \InvalidArgumentException("Unsupported type of 'command'.");
+        }
+
+        if ($this->cronTime) {
+            $this->cronExpression = CronExpression::factory($this->cronTime);
+        }
+
         $this->worker = $worker;
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+    
+    public function hasCronTime()
+    {
+        if ($this->cronTime) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public function lock()
@@ -98,11 +139,6 @@ class Job
     public function getLockFile()
     {
         return $this->lockFile;
-    }
-
-    public function getSchedule()
-    {
-        return $this->schedule;
     }
 
     public function setLastRunTime($lastRunTime)
