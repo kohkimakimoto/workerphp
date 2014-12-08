@@ -32,12 +32,20 @@ $worker->start();
 
 ## Installation
 
+Create `composer.json` for installing via composer. 
+
 ```json
 {
     "require": {
         "kohkimakimoto/workerphp": "0.*"
     }
 }
+```
+
+Run composer install command.
+
+```Shell
+$ composer install
 ```
 
 ## Usage
