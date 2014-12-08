@@ -31,21 +31,17 @@ class Job
 
     protected $worker;
 
+    protected $eventLoop;
+
     protected $schedule;
 
-    public function __construct($id, $schedule, $command)
+    public function __construct($id, $schedule, $command, $worker)
     {
         $this->id = $id;
         $this->command = $command;
         $this->schedule = $schedule;
-    }
-
-    public function init(Worker $worker)
-    {
-        $this->lastRunTime = new DateTime();
-        $this->worker = $worker;
         $this->cronExpression = CronExpression::factory($this->schedule);
-        $this->updateNextRunTime();
+        $this->worker = $worker;
     }
 
     public function lock()
@@ -80,6 +76,20 @@ class Job
         $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
     }
 
+    public function secondsUntilNextRuntime($from = null)
+    {
+        if (!$from) {
+            $from = new DateTime();
+        }
+
+        $ret = $this->nextRunTime->getTimestamp() - $from->getTimestamp();
+        if ($ret < 0) {
+            $ret = 0;
+        }
+
+        return $ret;
+    }
+
     public function getId()
     {
         return $this->id;
@@ -93,11 +103,6 @@ class Job
     public function getSchedule()
     {
         return $this->schedule;
-    }
-
-    public function isReadyToRun($date)
-    {
-        return ($this->nextRunTime <= $date);
     }
 
     public function setLastRunTime($lastRunTime)

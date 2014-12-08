@@ -4,6 +4,9 @@ namespace Kohkimakimoto\Worker;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
+use React\EventLoop\Factory;
+use React\Http\Server as ReactHttpServer;
+use React\Socket\Server as ReactSocketServer;
 use DateTime;
 
 /**
@@ -27,6 +30,10 @@ class Worker
 
     protected $isMaster;
 
+    protected $eventLoop;
+
+    protected $lockDelay;
+
     /**
      * Constructor.
      *
@@ -48,6 +55,10 @@ class Worker
         if (isset($this->options["is_debug"]) && $this->options["is_debug"]) {
             $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
+
+        $this->eventLoop = Factory::create();
+//        $socketServer = new ReactSocketServer($this->eventLoop);
+//        $httpServer = new ReactHttpServer($socketServer);
     }
 
     /**
@@ -66,56 +77,54 @@ class Worker
         $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
 
         // All registered jobs is initialized.
-        foreach ($this->jobs as $id => $job) {
-            $this->output->writeln("<info>Initializing a job.</info> (job_id: <comment>$id</comment>)");
-            $job->init($this);
+        $bootTime = new DateTime();
+        foreach ($this->jobs as $job) {
+            $this->output->writeln("<info>Initializing a job.</info> (job_id: <comment>".$job->getId()."</comment>)");
+            $job->setLastRunTime($bootTime);
+            $this->addJobAsTimer($job);
         }
+
         $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
 
-        // Inifinite loop to keep running.
-        while (true) {
-            foreach ($this->jobs as $job) {
-                $this->fireJobIfNeeded($job);
-            }
+        // A dummy timer to keep a process on a system.
+        $this->eventLoop->addPeriodicTimer(10, function () {});
 
-            sleep(1);
-            clearstatcache();
-        }
+        // Start event loop.
+        $this->eventLoop->run();
     }
 
-    /**
-     * Runs a job if it is needed.
-     *
-     * @param  [type] $job [description]
-     * @return [type] [description]
-     */
-    public function fireJobIfNeeded($job)
+    protected function addJobAsTimer($job)
     {
-        $id = $job->getId();
+        $job->updateNextRunTime();
+        $worker = $this;
+        $secondsOfTimer = $job->secondsUntilNextRuntime();
+        $this->eventLoop->addTimer($secondsOfTimer, function () use ($job, $worker) {
 
-        if ($job->locked()) {
-            if ($this->output->isDebug()) {
-                $this->output->writeln("Skipped: The job is already run (job_id: $id)");
+            $id = $job->getId();
+            $output = $worker->output;
+
+            $now = new DateTime();
+
+            if ($output->isDebug()) {
+                $output->writeln("[debug] Try running a job: (job_id: $id) at ".$now->format('Y-m-d H:i:s'));
             }
 
-            return;
-        }
+            if ($job->locked()) {
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Skipped: The job is already run (job_id: $id)");
+                }
 
-        $now = new DateTime();
+                // add next timer
+                $job->setLastRunTime($now);
+                $worker->addJobAsTimer($job);
 
-        if ($this->output->isDebug()) {
-            $this->output->write("Time: (now: ".$now->format('Y-m-d H:i:s').") ");
-            $this->output->writeln("(next run time: ".$job->getNextRunTime()->format('Y-m-d H:i:s').") (job_id: ".$id.")");
-        }
+                return;
+            }
 
-        if ($job->isReadyToRun($now)) {
             $job->lock();
-            if ($this->output->isDebug()) {
-                $this->output->writeln("Job lock: create file '".$job->getLockFile()."' (job_id: $id).");
+            if ($output->isDebug()) {
+                $output->writeln("[debug] Job lock: create file '".$job->getLockFile()."' (job_id: $id).");
             }
-
-            $job->setLastRunTime(new DateTime());
-            $job->updateNextRunTime();
 
             $pid = pcntl_fork();
             if ($pid === -1) {
@@ -123,59 +132,52 @@ class Worker
                 throw new \RuntimeException("Fork Error.");
             } elseif ($pid) {
                 // Parent process
-                $this->childPids[$pid] = $job;
+                $worker->childPids[$pid] = $job;
+
+                // add next timer
+                $job->setLastRunTime($now);
+                $worker->addJobAsTimer($job);
             } else {
-                // Child process
-                $this->isMaster = false;
-                if ($this->output->isDebug()) {
-                    $this->output->writeln("Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
+                $worker->isMaster = false;
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
                 }
 
                 $command = $job->getCommand();
-                $this->output->writeln("<info>Running a job.</info> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
+                $output->writeln("<info>Running a job.</info> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
 
                 if ($command instanceof \Closure) {
                     // command is a closure
-                    $status = call_user_func($command, $this);
-
-                    $file = $job->getLockFile();
-                    $job->unlock();
-                    if ($this->output->isDebug()) {
-                        $this->output->writeln("Job unlock: removed file '".$file."' (job_id: $id).");
-                    }
-
-                    exit($status);
+                    call_user_func($command, $worker);
                 } elseif (is_string($command)) {
                     // command is a string
                     $process = new Process($command);
                     $process->setTimeout(null);
-                    $output = $this->output;
-                    $status = $process->run(function ($type, $buffer) use ($output) {
+
+                    $process->run(function ($type, $buffer) use ($output) {
                         $output->write($buffer);
                     });
-
-                    $file = $job->getLockFile();
-                    $job->unlock();
-                    if ($this->output->isDebug()) {
-                        $this->output->writeln("Job unlock: removed file '".$file."' (job_id: $id).");
-                    }
-
-                    exit($status);
                 } else {
                     throw new \RuntimeException("Unsupported operation.");
                 }
+
+                $file = $job->getLockFile();
+                $job->unlock();
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
+                }
+                exit;
             }
-        } else {
-            if ($this->output->isDebug()) {
-                $this->output->write("Skipped: The job is not ready to run (job_id: ".$id.")");
-                $this->output->writeln(" schedule: (".$job->getSchedule().")");
-            }
+        });
+
+        if ($this->output->isDebug()) {
+            $this->output->writeln("[debug] Added new timer: '".$job->getNextRunTime()->format('Y-m-d H:i:s')."' (after ".$secondsOfTimer." seconds) (job_id: ".$job->getId().").");
         }
     }
 
     /**
      * Signal handler
-     * @param  int $signo
+     * @param  int  $signo
      * @return void
      */
     public function signalHandler($signo)
@@ -205,7 +207,7 @@ class Worker
                     $file = $job->getLockFile();
                     $job->unlock();
                     if ($this->output->isDebug()) {
-                        $this->output->writeln("Job unlock: removed file '".$file."' (job_id: $id).");
+                        $this->output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
                     }
                 }
             }
@@ -227,14 +229,14 @@ class Worker
     /**
      * Registers a job.
      *
-     * @param  string $schedule
-     * @param  [type] $command
+     * @param  string                      $schedule
+     * @param  [type]                      $command
      * @return Kohkimakimoto\Worker\Worker
      */
     public function job($schedule, $command)
     {
         $id = count($this->jobs);
-        $this->jobs[$id] = new Job($id, $schedule, $command);
+        $this->jobs[$id] = new Job($id, $schedule, $command, $this);
 
         return $this;
     }
