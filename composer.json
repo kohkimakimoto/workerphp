@@ -10,6 +10,7 @@
     "require": {
         "php": ">=5.4.0",
         "ext-pcntl": "*",
+        "pimple/pimple": "~3.0",
         "mtdowling/cron-expression": "1.0.*",
         "react/http": "0.4.*",
         "symfony/console": "2.6.*",

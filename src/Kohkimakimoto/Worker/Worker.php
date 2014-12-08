@@ -1,18 +1,19 @@
 <?php
 namespace Kohkimakimoto\Worker;
 
+use Pimple\Container;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
-use React\EventLoop\Factory;
 use React\Http\Server as ReactHttpServer;
 use React\Socket\Server as ReactSocketServer;
+use Kohkimakimoto\Worker\EventLoop\Factory;
 use DateTime;
 
 /**
  * Worker
  */
-class Worker
+class Worker extends Container
 {
     const DEFAULT_APP_NAME = 'WorkerPHP';
 
@@ -32,7 +33,9 @@ class Worker
 
     protected $eventLoop;
 
-    protected $httpServer;
+    protected $httpServerPort;
+
+    protected $httpServerHost;
 
     /**
      * Constructor.
@@ -57,8 +60,6 @@ class Worker
         }
 
         $this->eventLoop = Factory::create();
-//        $socketServer = new ReactSocketServer($this->eventLoop);
-//        $httpServer = new ReactHttpServer($socketServer);
     }
 
     /**
@@ -86,6 +87,14 @@ class Worker
                 $this->addJobAsTimer($job);
             }
         }
+
+        /*
+        if ($this->httpServerPort) {
+            $socketServer = new ReactSocketServer($this->eventLoop);
+            $httpServer = new ReactHttpServer($socketServer);
+            $socketServer->listen($this->httpServerPort, $this->httpServerHost);
+        }
+        */
 
         $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
 
@@ -244,8 +253,9 @@ class Worker
         return $this;
     }
 
-    public function httpServer($httpServer)
+    public function httpServer($port, $host = '127.0.0.1')
     {
-        $this->httpServer = $httpServer;
+        $this->httpServerPort = $port;
+        $this->httpServerHost = $host;
     }
 }
