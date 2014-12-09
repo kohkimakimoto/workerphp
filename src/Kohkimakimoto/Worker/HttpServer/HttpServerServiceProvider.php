@@ -1,6 +1,12 @@
 <?php
 namespace Kohkimakimoto\Worker\HttpServer;
 
-class HttpServerServiceProvider
+use Kohkimakimoto\Worker\ServiceProvider;
+use Kohkimakimoto\Worker\Worker;
+
+class HttpServerServiceProvider extends ServiceProvider
 {
+    public function register(Worker $worker)
+    {
+    }
 }

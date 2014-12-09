@@ -1,6 +1,12 @@
 <?php
 namespace Kohkimakimoto\Worker\Job;
 
-class JobServiceProvider
+use Kohkimakimoto\Worker\ServiceProvider;
+use Kohkimakimoto\Worker\Worker;
+
+class JobServiceProvider extends ServiceProvider
 {
+    public function register(Worker $worker)
+    {
+    }
 }

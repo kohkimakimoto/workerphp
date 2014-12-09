@@ -13,7 +13,7 @@ use DateTime;
 /**
  * Worker
  */
-class Worker extends Container
+class Worker
 {
     const DEFAULT_APP_NAME = 'WorkerPHP';
 
@@ -37,6 +37,9 @@ class Worker extends Container
 
     protected $httpServerHost;
 
+    protected $providers;
+
+    protected $container;
     /**
      * Constructor.
      *
@@ -60,6 +63,33 @@ class Worker extends Container
         }
 
         $this->eventLoop = Factory::create();
+        $this->container = new Container();
+
+        $this->registerDefaultProviders();
+    }
+
+    protected function registerDefaultProviders()
+    {
+        $providers = [
+            'Kohkimakimoto\Worker\Job\JobServiceProvider',
+            'Kohkimakimoto\Worker\HttpServer\HttpServerServiceProvider',
+        ];
+
+        foreach ($providers as $provider) {
+            $this->register($provider);
+        }
+    }
+
+    public function register($provider)
+    {
+        if (is_string($provider)) {
+            $provider = new $provider();
+        }
+
+        $this->providers[] = $provider;
+        $provider->register($this);
+
+        return $this;
     }
 
     /**
