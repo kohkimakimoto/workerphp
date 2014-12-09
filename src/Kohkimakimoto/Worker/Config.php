@@ -5,9 +5,9 @@ class Config
 {
     const DEFAULT_APP_NAME = 'WorkerPHP';
 
-    public $name;
+    protected $name;
 
-    public $isDebug;
+    protected $isDebug;
 
     public function __construct($config)
     {
@@ -22,5 +22,15 @@ class Config
         } else {
             $this->isDebug = false;
         }
+    }
+
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    public function isDebug()
+    {
+        return $this->isDebug;
     }
 }

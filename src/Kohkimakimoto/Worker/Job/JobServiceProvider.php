@@ -26,5 +26,4 @@ class JobServiceProvider extends ServiceProvider
     {
         $worker['job']->unlockAllJobs();
     }
-
 }

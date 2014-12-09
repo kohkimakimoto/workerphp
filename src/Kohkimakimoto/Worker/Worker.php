@@ -28,7 +28,7 @@ class Worker extends Container
 
     protected $finished;
 
-    protected $pid;
+    protected $masterPid;
 
     /**
      * Constructor.
@@ -37,19 +37,20 @@ class Worker extends Container
      */
     public function __construct($config = array())
     {
-        $this->pid = posix_getpid();
+        $this->masterPid = posix_getpid();
+        $this->finished = false;
 
         $this["event_loop"] = Factory::create();
-        $this["config"] = new Config($config);
         $this["output"] = new ConsoleOutput();
-
-        if ($this["config"]->isDebug) {
-            $this["output"]->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
-        }
+        $this["config"] = new Config($config);
 
         $this->output = $this["output"];
         $this->eventLoop = $this["event_loop"];
-        $this->finished = false;
+        $this->config = $this["config"];
+
+        if ($this->config->isDebug()) {
+            $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+        }
 
         $this->registerDefaultProviders();
     }
@@ -71,9 +72,7 @@ class Worker extends Container
         if (is_string($provider)) {
             $provider = new $provider();
         }
-
         $this->providers[] = $provider;
-
         $provider->register($this);
 
         return $this;
@@ -91,7 +90,7 @@ class Worker extends Container
         pcntl_signal(SIGTERM, array($this, "signalHandler"));
         pcntl_signal(SIGINT, array($this, "signalHandler"));
 
-        $this->output->writeln("<info>Starting <comment>".$this['config']->name."</comment>.</info>");
+        $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
         foreach($this->providers as $provider) {
             $provider->start($this);
@@ -132,20 +131,20 @@ class Worker extends Container
      */
     public function shutdown()
     {
-        if ($this->pid === posix_getpid() && !$this->finished) {
+        if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
             foreach($this->providers as $provider) {
                 $provider->shutdown($this);
             }
 
-            $this->output->writeln("<info>Shutdown <comment>".$this['config']->name."</comment>.</info>");
+            $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");
             $this->finished = true;
         }
     }
 
     public function job($name, $command)
     {
-        return $this["job"]->register($name, $command);
+        return $this->job->register($name, $command);
     }
 
     public function httpServer($port, $host = '127.0.0.1')
