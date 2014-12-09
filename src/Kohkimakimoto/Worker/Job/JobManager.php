@@ -9,9 +9,12 @@ class JobManager
 
     protected $config;
 
-    public function __construct($config)
+    protected $output;
+
+    public function __construct($config, $output)
     {
         $this->config = $config;
+        $this->output = $output;
     }
 
     public function register($name, $command)
@@ -26,5 +29,24 @@ class JobManager
         $this->jobs[$name] = new Job($id, $name, $command, $this->config);
 
         return $this;
+    }
+
+    public function boot()
+    {
+        // All registered jobs is initialized.
+        $bootTime = new DateTime();
+        foreach ($this->jobs as $job) {
+            $this->output->writeln("<info>Initializing job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$job->getId()."</comment>)");
+            $job->setLastRunTime($bootTime);
+
+            if ($job->hasCronTime()) {
+                $this->addJobAsTimer($job);
+            }
+        }
+    }
+
+    protected function addJobAsTimer($job)
+    {
+
     }
 }
