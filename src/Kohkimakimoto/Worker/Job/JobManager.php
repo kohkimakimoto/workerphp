@@ -24,7 +24,6 @@ class JobManager
     public function register($name, $command)
     {
         // checks if the same name exists.
-
         if (array_key_exists($name, $this->jobs)) {
             throw new \InvalidArgumentException("'$name' is already registered as a job.");
         }

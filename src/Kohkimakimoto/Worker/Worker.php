@@ -2,12 +2,10 @@
 namespace Kohkimakimoto\Worker;
 
 use Pimple\Container;
-use Pimple\ServiceProviderInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
 use Kohkimakimoto\Worker\EventLoop\Factory;
-use DateTime;
 
 /**
  * Worker
@@ -90,7 +88,7 @@ class Worker extends Container
 
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
-        foreach($this->providers as $provider) {
+        foreach ($this->providers as $provider) {
             $provider->start($this);
         }
 
@@ -131,7 +129,7 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-            foreach($this->providers as $provider) {
+            foreach ($this->providers as $provider) {
                 $provider->shutdown($this);
             }
 

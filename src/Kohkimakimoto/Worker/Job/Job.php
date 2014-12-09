@@ -21,16 +21,6 @@ class Job
 
     protected $nextRunTime;
 
-    protected $minute = '*';
-
-    protected $hour = '*';
-
-    protected $dayOfMonth = '*';
-
-    protected $month = '*';
-
-    protected $dayOfWeek = '*';
-
     protected $lockFile;
 
     protected $eventLoop;

@@ -3,8 +3,6 @@ namespace Kohkimakimoto\Worker\Http;
 
 use React\Http\Server as ReactHttpServer;
 use React\Socket\Server as ReactSocketServer;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
-use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
 
@@ -49,24 +47,12 @@ class HttpServer
 
         $controller = $this->controller;
 
-        $http->on('request', function($request, $response) use ($controller) {
+        $http->on('request', function ($request, $response) use ($controller) {
 
             $controller->execute($request, $response);
 
-/*
-            $path = '/'.ltrim(rawurldecode($request->getPath()), '/');
-            $method = strtoupper($request->getMethod());
-
-            $output->writeln("<info>HTTP $method: </info><comment>".$path."</comment>");
-
-            $response->writeHead(200, array('Content-Type' => 'text/plain'));
-            $response->end("Hello World!\n");
-*/
         });
 
         $this->output->writeln("<info>Initializing http server:</info> <comment>http://".$this->host.":".$this->port."</comment>");
     }
 }
-
-
-

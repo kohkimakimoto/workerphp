@@ -1,15 +1,11 @@
 <?php
 namespace Kohkimakimoto\Worker\Http;
 
-use React\Http\Server as ReactHttpServer;
-use React\Socket\Server as ReactSocketServer;
 use React\Http\ResponseCodes;
-
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
-use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class HttpController
@@ -31,8 +27,6 @@ class HttpController
     {
         $this->routes = new RouteCollection();
         $this->routes->add('index', new Route('/', ['_action' => 'index']));
-
-
     }
 
     public function execute($request, $response)
@@ -50,7 +44,6 @@ class HttpController
             $this->outputAccessLog($request, 404);
         }
     }
-
 
     public function index($request, $response)
     {
