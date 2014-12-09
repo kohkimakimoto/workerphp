@@ -2,6 +2,7 @@
 namespace Kohkimakimoto\Worker;
 
 use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
@@ -13,17 +14,11 @@ use DateTime;
 /**
  * Worker
  */
-class Worker
+class Worker extends Container
 {
-    const DEFAULT_APP_NAME = 'WorkerPHP';
-
     protected $name;
 
     protected $output;
-
-    protected $isDebug;
-
-    protected $options;
 
     protected $jobs = array();
 
@@ -39,32 +34,30 @@ class Worker
 
     protected $providers;
 
-    protected $container;
+    protected $finished;
+
     /**
      * Constructor.
      *
-     * @param array $options configuration parameters.
+     * @param array $config configuration parameters.
      */
-    public function __construct($options = array())
+    public function __construct($config = array())
     {
+        $this["config"] = new Config($config);
+        $this->name = $this["config"]->name;
+
+        $this["output"] = new ConsoleOutput();
+        if ($this["config"]->isDebug) {
+            $this["output"]->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
+        }
+        $this->output = $this["output"];
+
         $this->isMaster = true;
         $this->finished = false;
-        $this->options = $options;
-        $this->output = new ConsoleOutput();
-
-        if (isset($this->options["name"])) {
-            $this->name = $this->options["name"];
-        } else {
-            $this->name = self::DEFAULT_APP_NAME;
-        }
-
-        if (isset($this->options["is_debug"]) && $this->options["is_debug"]) {
-            $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
-        }
 
         $this->eventLoop = Factory::create();
-        $this->container = new Container();
 
+        $this->providers = [];
         $this->registerDefaultProviders();
     }
 
@@ -76,17 +69,18 @@ class Worker
         ];
 
         foreach ($providers as $provider) {
-            $this->register($provider);
+            $this->load($provider);
         }
     }
 
-    public function register($provider)
+    public function load($provider)
     {
         if (is_string($provider)) {
             $provider = new $provider();
         }
 
         $this->providers[] = $provider;
+
         $provider->register($this);
 
         return $this;
@@ -100,7 +94,20 @@ class Worker
     public function start()
     {
         declare (ticks = 1);
+        register_shutdown_function(array($this, "shutdown"));
+        pcntl_signal(SIGTERM, array($this, "signalHandler"));
+        pcntl_signal(SIGINT, array($this, "signalHandler"));
 
+        $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
+
+        foreach($this->providers as $providers) {
+            $providers->start($this);
+        }
+    }
+
+    public function startBackup()
+    {
+        declare (ticks = 1);
         register_shutdown_function(array($this, "shutdown"));
         pcntl_signal(SIGTERM, array($this, "signalHandler"));
         pcntl_signal(SIGINT, array($this, "signalHandler"));
@@ -117,14 +124,6 @@ class Worker
                 $this->addJobAsTimer($job);
             }
         }
-
-        /*
-        if ($this->httpServerPort) {
-            $socketServer = new ReactSocketServer($this->eventLoop);
-            $httpServer = new ReactHttpServer($socketServer);
-            $socketServer->listen($this->httpServerPort, $this->httpServerHost);
-        }
-        */
 
         $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
 
@@ -243,6 +242,10 @@ class Worker
      */
     public function shutdown()
     {
+        foreach($this->providers as $providers) {
+            $providers->start($this);
+        }
+
         if ($this->isMaster && !$this->finished) {
             foreach ($this->jobs as $id => $job) {
                 if ($job->locked()) {
@@ -270,22 +273,28 @@ class Worker
 
     public function job($name, $command)
     {
-        // checks if the same name exists.
-        foreach ($this->jobs as $job) {
-            if ($job->getName() == $name) {
-                throw new \InvalidArgumentException("'$name' is already registered as a job.");
-            }
-        }
-
-        $id = count($this->jobs);
-        $this->jobs[$id] = new Job($id, $name, $command, $this);
-
-        return $this;
+        return $this["job"]->register($name, $command);
     }
 
     public function httpServer($port, $host = '127.0.0.1')
     {
         $this->httpServerPort = $port;
         $this->httpServerHost = $host;
+    }
+
+    public function __get($key)
+    {
+        return $this[$key];
+    }
+
+    public function __set($key, $value)
+    {
+        $this[$key] = $value;
+    }
+
+    public function __call($method, $parameters)
+    {
+        // call_user_func_array($callback, $parameters);
+        throw new \BadMethodCallException("Method [$method] does not exist.");
     }
 }

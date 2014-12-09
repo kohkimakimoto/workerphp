@@ -10,3 +10,12 @@ class HttpServerServiceProvider extends ServiceProvider
     {
     }
 }
+
+
+/*
+if ($this->httpServerPort) {
+    $socketServer = new ReactSocketServer($this->eventLoop);
+    $httpServer = new ReactHttpServer($socketServer);
+    $socketServer->listen($this->httpServerPort, $this->httpServerHost);
+}
+*/
