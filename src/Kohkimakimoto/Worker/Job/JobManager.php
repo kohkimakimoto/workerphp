@@ -149,4 +149,9 @@ class JobManager
             $this->output->writeln("[debug] Added new timer: '".$job->getNextRunTime()->format('Y-m-d H:i:s')."' (after ".$secondsOfTimer." seconds) (job_id: ".$job->getId().").");
         }
     }
+
+    public function getJobs()
+    {
+        return $this->jobs;
+    }
 }

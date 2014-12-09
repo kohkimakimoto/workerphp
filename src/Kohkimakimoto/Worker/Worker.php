@@ -6,8 +6,6 @@ use Pimple\ServiceProviderInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
-use React\Http\Server as ReactHttpServer;
-use React\Socket\Server as ReactSocketServer;
 use Kohkimakimoto\Worker\EventLoop\Factory;
 use DateTime;
 
@@ -59,7 +57,7 @@ class Worker extends Container
     {
         $providers = [
             'Kohkimakimoto\Worker\Job\JobServiceProvider',
-            'Kohkimakimoto\Worker\HttpServer\HttpServerServiceProvider',
+            'Kohkimakimoto\Worker\Http\HttpServerServiceProvider',
         ];
 
         foreach ($providers as $provider) {
@@ -144,11 +142,16 @@ class Worker extends Container
 
     public function job($name, $command)
     {
-        return $this->job->register($name, $command);
+        $this->job->register($name, $command);
+
+        return $this;
     }
 
     public function httpServer($port, $host = '127.0.0.1')
     {
+        $this->httpServer->bind($port, $host);
+
+        return $this;
     }
 
     public function __get($key)
