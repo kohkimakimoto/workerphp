@@ -45,6 +45,16 @@ class HttpController
         }
     }
 
+    private function outputAccessLog($request, $status)
+    {
+        if ($status == 200) {
+            $color = "blue";
+        } else {
+            $color = "red";
+        }
+        $this->output->writeln("<info>HTTP ".$request->getMethod().": </info><comment>".$request->getPath()."</comment> <fg=$color>$status ".ResponseCodes::$statusTexts[$status]."</fg=$color>");
+    }
+
     public function index($request, $response)
     {
         $parameters = [
@@ -57,13 +67,4 @@ class HttpController
         $this->outputAccessLog($request, 200);
     }
 
-    private function outputAccessLog($request, $status)
-    {
-        if ($status == 200) {
-            $color = "blue";
-        } else {
-            $color = "red";
-        }
-        $this->output->writeln("<info>HTTP ".$request->getMethod().": </info><comment>".$request->getPath()."</comment> <fg=$color>".ResponseCodes::$statusTexts[$status]."</fg=$color>");
-    }
 }
