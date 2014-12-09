@@ -27,6 +27,7 @@ class HttpController
     {
         $this->routes = new RouteCollection();
         $this->routes->add('index', new Route('/', ['_action' => 'index']));
+        $this->routes->add('jobs', new Route('/jobs', ['_action' => 'jobs']));
     }
 
     public function execute($request, $response)
@@ -37,7 +38,7 @@ class HttpController
         try {
             $parameters = $matcher->match($request->getPath());
             $action = $parameters['_action'];
-            call_user_func(array($this, $action), $request, $response);
+            call_user_func(array($this, $action), $request, $response, $parameters);
         } catch (ResourceNotFoundException $e) {
             $response->writeHead(404, array('Content-Type' => 'text/plain'));
             $response->end("Not found\n");
@@ -55,16 +56,32 @@ class HttpController
         $this->output->writeln("<info>HTTP ".$request->getMethod().": </info><comment>".$request->getPath()."</comment> <fg=$color>$status ".ResponseCodes::$statusTexts[$status]."</fg=$color>");
     }
 
-    public function index($request, $response)
+    public function index($request, $response, $parameters)
     {
-        $parameters = [
+        $contents = [
             "name" => $this->config->getName(),
             "number_of_jobs" => count($this->jobManager->getJobs()),
         ];
 
         $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
-        $response->end(json_encode($parameters));
+        $response->end(json_encode($contents));
         $this->outputAccessLog($request, 200);
     }
 
+    public function jobs($request, $response, $parameters)
+    {
+        $jobs = $this->jobManager->getJobs();
+        $contents = [];
+
+        foreach ($jobs as $job) {
+            $contents[] = [
+                "id" => $job->getId(),
+                "name" => $job->getName(),
+            ];
+        }
+
+        $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
+        $response->end(json_encode($contents));
+        $this->outputAccessLog($request, 200);
+    }
 }
