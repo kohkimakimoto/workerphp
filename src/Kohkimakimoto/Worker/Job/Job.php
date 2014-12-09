@@ -83,7 +83,7 @@ class Job
 
     public function lock()
     {
-        $this->lockFile = tempnam(sys_get_temp_dir(), $this->config->name."job.");
+        $this->lockFile = tempnam(sys_get_temp_dir(), $this->config->name.".job.");
     }
 
     public function unlock()

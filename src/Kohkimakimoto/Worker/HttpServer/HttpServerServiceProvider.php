@@ -9,6 +9,11 @@ class HttpServerServiceProvider extends ServiceProvider
     public function register(Worker $worker)
     {
     }
+
+    public function start(Worker $worker)
+    {
+
+    }
 }
 
 

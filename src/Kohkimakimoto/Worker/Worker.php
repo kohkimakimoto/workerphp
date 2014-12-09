@@ -20,12 +20,6 @@ class Worker extends Container
 
     protected $output;
 
-    protected $jobs = array();
-
-    protected $childPids = array();
-
-    protected $isMaster;
-
     protected $eventLoop;
 
     protected $httpServerPort;
@@ -36,6 +30,8 @@ class Worker extends Container
 
     protected $finished;
 
+    protected $pid;
+
     /**
      * Constructor.
      *
@@ -43,6 +39,9 @@ class Worker extends Container
      */
     public function __construct($config = array())
     {
+        $this->pid = posix_getpid();
+
+        $this["event_loop"] = Factory::create();
         $this["config"] = new Config($config);
         $this->name = $this["config"]->name;
 
@@ -52,10 +51,9 @@ class Worker extends Container
         }
         $this->output = $this["output"];
 
-        $this->isMaster = true;
         $this->finished = false;
 
-        $this->eventLoop = Factory::create();
+        $this->eventLoop = $this["event_loop"];
 
         $this->providers = [];
         $this->registerDefaultProviders();
@@ -100,29 +98,8 @@ class Worker extends Container
 
         $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
 
-        foreach($this->providers as $providers) {
-            $providers->start($this);
-        }
-    }
-
-    public function startBackup()
-    {
-        declare (ticks = 1);
-        register_shutdown_function(array($this, "shutdown"));
-        pcntl_signal(SIGTERM, array($this, "signalHandler"));
-        pcntl_signal(SIGINT, array($this, "signalHandler"));
-
-        $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
-
-        // All registered jobs is initialized.
-        $bootTime = new DateTime();
-        foreach ($this->jobs as $job) {
-            $this->output->writeln("<info>Initializing job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$job->getId()."</comment>)");
-            $job->setLastRunTime($bootTime);
-
-            if ($job->hasCronTime()) {
-                $this->addJobAsTimer($job);
-            }
+        foreach($this->providers as $provider) {
+            $provider->start($this);
         }
 
         $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
@@ -132,88 +109,6 @@ class Worker extends Container
 
         // Start event loop.
         $this->eventLoop->run();
-    }
-
-    protected function addJobAsTimer($job)
-    {
-        $job->updateNextRunTime();
-        $worker = $this;
-        $secondsOfTimer = $job->secondsUntilNextRuntime();
-        $this->eventLoop->addTimer($secondsOfTimer, function () use ($job, $worker) {
-
-            $id = $job->getId();
-            $output = $worker->output;
-
-            $now = new DateTime();
-
-            if ($output->isDebug()) {
-                $output->writeln("[debug] Try running a job: (job_id: $id) at ".$now->format('Y-m-d H:i:s'));
-            }
-
-            if ($job->locked()) {
-                if ($output->isDebug()) {
-                    $output->writeln("[debug] Skipped: The job is already run (job_id: $id)");
-                }
-
-                // add next timer
-                $job->setLastRunTime($now);
-                $worker->addJobAsTimer($job);
-
-                return;
-            }
-
-            $job->lock();
-            if ($output->isDebug()) {
-                $output->writeln("[debug] Job lock: create file '".$job->getLockFile()."' (job_id: $id).");
-            }
-
-            $pid = pcntl_fork();
-            if ($pid === -1) {
-                // Error
-                throw new \RuntimeException("Fork Error.");
-            } elseif ($pid) {
-                // Parent process
-                $worker->childPids[$pid] = $job;
-
-                // add next timer
-                $job->setLastRunTime($now);
-                $worker->addJobAsTimer($job);
-            } else {
-                $worker->isMaster = false;
-                if ($output->isDebug()) {
-                    $output->writeln("[debug] Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
-                }
-
-                $command = $job->getCommand();
-                $output->writeln("<info>Running job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
-
-                if ($command instanceof \Closure) {
-                    // command is a closure
-                    call_user_func($command, $worker);
-                } elseif (is_string($command)) {
-                    // command is a string
-                    $process = new Process($command);
-                    $process->setTimeout(null);
-
-                    $process->run(function ($type, $buffer) use ($output) {
-                        $output->write($buffer);
-                    });
-                } else {
-                    throw new \RuntimeException("Unsupported operation.");
-                }
-
-                $file = $job->getLockFile();
-                $job->unlock();
-                if ($output->isDebug()) {
-                    $output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
-                }
-                exit;
-            }
-        });
-
-        if ($this->output->isDebug()) {
-            $this->output->writeln("[debug] Added new timer: '".$job->getNextRunTime()->format('Y-m-d H:i:s')."' (after ".$secondsOfTimer." seconds) (job_id: ".$job->getId().").");
-        }
     }
 
     /**
@@ -242,33 +137,15 @@ class Worker extends Container
      */
     public function shutdown()
     {
-        foreach($this->providers as $providers) {
-            $providers->start($this);
-        }
-
-        if ($this->isMaster && !$this->finished) {
-            foreach ($this->jobs as $id => $job) {
-                if ($job->locked()) {
-                    $file = $job->getLockFile();
-                    $job->unlock();
-                    if ($this->output->isDebug()) {
-                        $this->output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
-                    }
-                }
+        if ($this->pid === posix_getpid() && !$this->finished) {
+            // only master process.
+            foreach($this->providers as $provider) {
+                $provider->shutdown($this);
             }
+
             $this->output->writeln("<info>Shutdown <comment>".$this->name."</comment>.</info>");
             $this->finished = true;
         }
-    }
-
-    /**
-     * Gets an application name.
-     *
-     * @return string name
-     */
-    public function getName()
-    {
-        return $this->name;
     }
 
     public function job($name, $command)
@@ -278,8 +155,6 @@ class Worker extends Container
 
     public function httpServer($port, $host = '127.0.0.1')
     {
-        $this->httpServerPort = $port;
-        $this->httpServerHost = $host;
     }
 
     public function __get($key)

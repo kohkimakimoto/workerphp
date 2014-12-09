@@ -11,7 +11,8 @@ class JobServiceProvider extends ServiceProvider
         $worker['job'] = function ($worker) {
             return new JobManager(
                 $worker['config'],
-                $worker['output']
+                $worker['output'],
+                $worker['event_loop']
             );
         };
     }
@@ -20,4 +21,10 @@ class JobServiceProvider extends ServiceProvider
     {
         $worker['job']->boot();
     }
+
+    public function shutdown(Worker $worker)
+    {
+        $worker['job']->unlockAllJobs();
+    }
+
 }
