@@ -16,8 +16,6 @@ use DateTime;
  */
 class Worker extends Container
 {
-    protected $name;
-
     protected $output;
 
     protected $eventLoop;
@@ -26,7 +24,7 @@ class Worker extends Container
 
     protected $httpServerHost;
 
-    protected $providers;
+    protected $providers = [];
 
     protected $finished;
 
@@ -43,19 +41,16 @@ class Worker extends Container
 
         $this["event_loop"] = Factory::create();
         $this["config"] = new Config($config);
-        $this->name = $this["config"]->name;
-
         $this["output"] = new ConsoleOutput();
+
         if ($this["config"]->isDebug) {
             $this["output"]->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
-        $this->output = $this["output"];
 
+        $this->output = $this["output"];
+        $this->eventLoop = $this["event_loop"];
         $this->finished = false;
 
-        $this->eventLoop = $this["event_loop"];
-
-        $this->providers = [];
         $this->registerDefaultProviders();
     }
 
@@ -96,7 +91,7 @@ class Worker extends Container
         pcntl_signal(SIGTERM, array($this, "signalHandler"));
         pcntl_signal(SIGINT, array($this, "signalHandler"));
 
-        $this->output->writeln("<info>Starting <comment>".$this->name."</comment>.</info>");
+        $this->output->writeln("<info>Starting <comment>".$this['config']->name."</comment>.</info>");
 
         foreach($this->providers as $provider) {
             $provider->start($this);
@@ -143,7 +138,7 @@ class Worker extends Container
                 $provider->shutdown($this);
             }
 
-            $this->output->writeln("<info>Shutdown <comment>".$this->name."</comment>.</info>");
+            $this->output->writeln("<info>Shutdown <comment>".$this['config']->name."</comment>.</info>");
             $this->finished = true;
         }
     }
