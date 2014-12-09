@@ -27,7 +27,7 @@ class HttpController
     {
         $this->routes = new RouteCollection();
         $this->routes->add('index', new Route('/', ['_action' => 'index']));
-        $this->routes->add('jobs', new Route('/jobs', ['_action' => 'jobs']));
+        // $this->routes->add('jobs', new Route('/jobs', ['_action' => 'jobs']));
     }
 
     public function execute($request, $response)
