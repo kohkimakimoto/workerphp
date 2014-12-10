@@ -90,7 +90,7 @@ class Job
 
     public function updateNextRunTime()
     {
-        // prevent same time.
+        // prevent to set same time.
         $lastRunTime = clone $this->lastRunTime;
         $lastRunTime->modify('+5 second');
 
