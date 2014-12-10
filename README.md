@@ -1,6 +1,8 @@
 # WorkerPHP
 
 [![Build Status](https://travis-ci.org/kohkimakimoto/workerphp.svg?branch=master)](https://travis-ci.org/kohkimakimoto/workerphp)
+[![Latest Stable Version](https://poser.pugx.org/kohkimakimoto/workerphp/v/stable.png)](https://packagist.org/packages/kohkimakimoto/workerphp)
+[![License](https://poser.pugx.org/kohkimakimoto/workerphp/license.png)](https://packagist.org/packages/kohkimakimoto/workerphp)
 
 A PHP micro job scheduler framework like cron.
 
@@ -86,11 +88,11 @@ $ php worker.php
 Starting WorkerPHP.
 Initializing job: hello (job_id: 0)
 Successfully booted. Quit working with CONTROL-C.
-Running job: hello (job_id: 0) at 2014-12-08 14:56:00
+Running job: hello (pid: 36643) at 2014-12-08 14:56:00
 hello
-Running job: hello (job_id: 0) at 2014-12-08 14:57:00
+Running job: hello (pid: 36646) at 2014-12-08 14:57:00
 hello
-Running job: hello (job_id: 0) at 2014-12-08 14:58:00
+Running job: hello (pid: 36647) at 2014-12-08 14:58:00
 hello
 ```
 
@@ -99,15 +101,15 @@ The job you defined runs every minute.
 Also you can define `command` a command string not a closure.
 
 ```php
-$worker->job("uptime", ['cronTime' => '* * * * *', 'onTick' => "uptime"]);
+$worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
 ```
 
 The worker runs command `uptime` every minute.
 
 ```
-Running job: uptime (job_id: 0) at 2014-12-04 12:37:00
+Running job: uptime (pid: 36650) at 2014-12-04 12:37:00
 12:37  up 8 days, 16:06, 6 users, load averages: 1.82 1.74 1.83
-Running job: uptime (job_id: 0) at 2014-12-04 12:38:00
+Running job: uptime (pid: 36651) at 2014-12-04 12:38:00
 12:38  up 8 days, 16:07, 6 users, load averages: 1.68 1.72 1.81
 ```
 
