@@ -114,7 +114,7 @@ class JobManager
                 }
 
                 $command = $job->getCommand();
-                $output->writeln("<info>Running job:</info> <comment>$name</comment> at ".$now->format('Y-m-d H:i:s'));
+                $output->writeln("<info>Running job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
 
                 if ($command instanceof \Closure) {
                     // command is a closure
