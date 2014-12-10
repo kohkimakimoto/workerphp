@@ -90,7 +90,11 @@ class Job
 
     public function updateNextRunTime()
     {
-        $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
+        // prevent same time.
+        $lastRunTime = clone $this->lastRunTime;
+        $lastRunTime->modify('+5 second');
+
+        $this->nextRunTime = $this->cronExpression->getNextRunDate($lastRunTime);
     }
 
     public function secondsUntilNextRuntime($from = null)

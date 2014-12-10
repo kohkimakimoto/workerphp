@@ -2,8 +2,8 @@
 require_once __DIR__.'/../vendor/autoload.php';
 date_default_timezone_set('Asia/Tokyo');
 
-// $worker = new \Kohkimakimoto\Worker\Worker(["debug" => true]);
-$worker = new \Kohkimakimoto\Worker\Worker();
+$worker = new \Kohkimakimoto\Worker\Worker(["debug" => true]);
+//$worker = new \Kohkimakimoto\Worker\Worker();
 
 //$worker->httpServer("8888", "localhost");
 
