@@ -72,8 +72,8 @@ class JobManager
         $job->updateNextRunTime();
         $worker = $this;
         $secondsOfTimer = $job->secondsUntilNextRuntime();
-        $this->eventLoop->addTimer($secondsOfTimer, function () use ($job, $worker) {
 
+        $this->eventLoop->addTimer($secondsOfTimer, function () use ($job, $worker) {
             $id = $job->getId();
             $output = $worker->output;
 
@@ -83,38 +83,43 @@ class JobManager
                 $output->writeln("[debug] Try running a job: (job_id: $id) at ".$now->format('Y-m-d H:i:s'));
             }
 
-            if ($job->locked()) {
-                if ($output->isDebug()) {
-                    $output->writeln("[debug] Skipped: The job is already run (job_id: $id)");
-                }
-
-                // add next timer
-                $job->setLastRunTime($now);
-                $worker->addJobAsTimer($job);
-
-                return;
-            }
-
-            $job->lock();
-            if ($output->isDebug()) {
-                $output->writeln("[debug] Job lock: create file '".$job->getLockFile()."' (job_id: $id).");
-            }
+            $runtimeJob = $job->makeRuntimeJob();
 
             $pid = pcntl_fork();
             if ($pid === -1) {
                 // Error
-                throw new \RuntimeException("Fork Error.");
+                throw new \RuntimeException("pcntl_fork error.");
             } elseif ($pid) {
                 // Parent process
-                $worker->childPids[$pid] = $job;
+
+                // wait
+                $status = null;
+                $pid = pcntl_wait($status);
+                if (!$pid) {
+                    throw new \RuntimeException("pcntl_wait error.");
+                }
 
                 // add next timer
                 $job->setLastRunTime($now);
                 $worker->addJobAsTimer($job);
             } else {
                 // Child process
+                // Forks it one more time to prevent to be zombie process.
+                $pid = pcntl_fork();
+                if ($pid === -1) {
+                    // Error
+                    throw new \RuntimeException("pcntl_fork error.");
+                } elseif ($pid) {
+                    exit;
+                }
+
                 if ($output->isDebug()) {
                     $output->writeln("[debug] Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
+                }
+
+                $runtimeJob->createRunFileWithPid(posix_getpid());
+                if ($output->isDebug()) {
+                    $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' (job_id: $id).");
                 }
 
                 $command = $job->getCommand();
@@ -135,11 +140,12 @@ class JobManager
                     throw new \RuntimeException("Unsupported operation.");
                 }
 
-                $file = $job->getLockFile();
-                $job->unlock();
+                $file = $runtimeJob->getRunFile();
+                $runtimeJob->removeRunFile();
                 if ($output->isDebug()) {
-                    $output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: $id).");
+                    $output->writeln("[debug] Removed run file '".$file."' (job_id: $id).");
                 }
+
                 exit;
             }
         });

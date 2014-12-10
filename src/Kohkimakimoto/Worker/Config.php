@@ -17,7 +17,7 @@ class Config
             $this->name = self::DEFAULT_APP_NAME;
         }
 
-        if (isset($config["is_debug"]) && $config["is_debug"]) {
+        if (isset($config["debug"]) && $config["debug"]) {
             $this->isDebug = true;
         } else {
             $this->isDebug = false;

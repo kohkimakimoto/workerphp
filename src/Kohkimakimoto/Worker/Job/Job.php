@@ -27,6 +27,10 @@ class Job
 
     protected $cronTime;
 
+    protected $numberOfProcesses;
+
+    protected $runtimeJobs = [];
+
     public function __construct($id, $name, $command, $config)
     {
         $this->id = $id;
@@ -41,13 +45,18 @@ class Job
             $this->command = $command;
         } elseif (is_array($command)) {
             // array
-            if (isset($command["onTick"])) {
-                $this->command = $command["onTick"];
+            if (isset($command["command"])) {
+                $this->command = $command["command"];
             }
 
-            if (isset($command["cronTime"])) {
-                $this->cronTime = $command["cronTime"];
+            if (isset($command["cron_time"])) {
+                $this->cronTime = $command["cron_time"];
             }
+
+            if (isset($command["number_of_processes"])) {
+                $this->numberOfProcesses = $command["number_of_processes"];
+            }
+
         } else {
             throw new \InvalidArgumentException("Unsupported type of 'command'.");
         }
@@ -69,6 +78,13 @@ class Job
         } else {
             return false;
         }
+    }
+
+    public function makeRuntimeJob()
+    {
+        $runtimeJob = new RuntimeJob($this->config, $this);
+
+        return $runtimeJob;
     }
 
     public function lock()
