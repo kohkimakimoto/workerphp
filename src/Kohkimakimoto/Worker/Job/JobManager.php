@@ -48,13 +48,15 @@ class JobManager
         }
     }
 
-    public function unlockAllJobs()
+    public function removeAllRunFilesOfRuntimeJobs()
     {
         if ($this->output->isDebug()) {
-            $this->output->writeln("[debug] Try to unlock all jobs");
+            $this->output->writeln("[debug] Try to remove all run files of the jobs.");
         }
 
         foreach ($this->jobs as $job) {
+
+/*
             if ($job->locked()) {
                 $file = $job->getLockFile();
                 $job->unlock();
@@ -64,6 +66,8 @@ class JobManager
             } else {
                 $this->output->writeln("[debug] The job (job_id: ".$job->getId().") already unlocked. ");
             }
+*/
+
         }
     }
 
@@ -104,6 +108,10 @@ class JobManager
                 $worker->addJobAsTimer($job);
             } else {
                 // Child process
+
+                // Remove tty to ignore signals from tty.
+                posix_setsid();
+
                 // Forks it one more time to prevent to be zombie process.
                 $pid = pcntl_fork();
                 if ($pid === -1) {

@@ -24,6 +24,5 @@ class JobServiceProvider extends ServiceProvider
 
     public function shutdown(Worker $worker)
     {
-        $worker['job']->unlockAllJobs();
     }
 }

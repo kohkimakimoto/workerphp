@@ -83,35 +83,8 @@ class Job
     public function makeRuntimeJob()
     {
         $runtimeJob = new RuntimeJob($this->config, $this);
-
+        $this->runtimeJobs[] = $runtimeJob;
         return $runtimeJob;
-    }
-
-    public function lock()
-    {
-        $this->lockFile = tempnam(sys_get_temp_dir(), $this->config->getName().".job.");
-    }
-
-    public function unlock()
-    {
-        if ($this->lockFile) {
-            unlink($this->lockFile);
-            $this->lockFile = null;
-        }
-    }
-
-    /**
-     * Determin if the job is locked.
-     *
-     * @return boolean
-     */
-    public function locked()
-    {
-        if (!$this->lockFile) {
-            return false;
-        }
-
-        return file_exists($this->lockFile);
     }
 
     public function updateNextRunTime()
@@ -138,11 +111,6 @@ class Job
         return $this->id;
     }
 
-    public function getLockFile()
-    {
-        return $this->lockFile;
-    }
-
     public function setLastRunTime($lastRunTime)
     {
         $this->lastRunTime = $lastRunTime;
@@ -161,5 +129,10 @@ class Job
     public function getCommand()
     {
         return $this->command;
+    }
+
+    public function getRuntimJobs()
+    {
+        return $this->runtimeJobs;
     }
 }

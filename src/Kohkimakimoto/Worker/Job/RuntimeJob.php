@@ -35,6 +35,7 @@ class RuntimeJob
     public function createRunFileWithPid($pid)
     {
         file_put_contents($this->runFile, $pid);
+        $this->pid = $pid;
     }
 
     public function removeRunFile()

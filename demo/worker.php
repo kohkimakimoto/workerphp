@@ -11,6 +11,7 @@ $worker->httpServer("8888", "localhost");
 $worker->job("hello", ['cron_time' => '* * * * *', 'command' => function(){
 
     echo "hello\n";
+    sleep(20);
 
 }]);
 
