@@ -11,12 +11,12 @@ require_once __DIR__.'/vendor/autoload.php';
 $worker = new \Kohkimakimoto\Worker\Worker();
 
 // job for every minute.
-$worker->job("hello", ['cronTime' => '* * * * *', 'onTick' => function(){
+$worker->job("hello", ['cron_time' => '* * * * *', 'command' => function(){
     echo "Hello world\n";
 }]);
 
 // job runs a shell command.
-$worker->job("uptime", ['cronTime' => '10 * * * *', 'onTick' => "uptime"]);
+$worker->job("uptime", ['cron_time' => '10 * * * *', 'command' => "uptime"]);
 
 $worker->start();
 ```
@@ -72,12 +72,12 @@ Successfully booted. Quit working with CONTROL-C.
 Define a job before line of `$worker->start()`.
 
 ```php
-$worker->job("hello", ['cronTime' => '* * * * *', 'onTick' => function(){
+$worker->job("hello", ['cron_time' => '* * * * *', 'command' => function(){
     echo "Hello world\n";
 }]);
 ```
 
-This is a job definition. `$worker->job` method has two arguments. The first is a name of job. It must be unique in all jobs. The second is an array that has some parameters for the job. `cronTime` is a schedule when to run the job. It is a "cron expressions" string. `onTick` is a closure that is executed by the worker.
+This is a job definition. `$worker->job` method has two arguments. The first is a name of job. It must be unique in all jobs. The second is an array that has some parameters for the job. `cron_time` is a schedule when to run the job. It is a "cron expressions" string. `command` is a closure that is executed by the worker.
 
 You can run it. You will get messages like the below.
 
@@ -96,7 +96,7 @@ hello
 
 The job you defined runs every minute.
 
-Also you can define `onTick` a command string not a closure.
+Also you can define `command` a command string not a closure.
 
 ```php
 $worker->job("uptime", ['cronTime' => '* * * * *', 'onTick' => "uptime"]);

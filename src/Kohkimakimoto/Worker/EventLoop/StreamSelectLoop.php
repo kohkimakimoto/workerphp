@@ -21,7 +21,7 @@ class StreamSelectLoop extends \React\EventLoop\StreamSelectLoop
             $except = null;
 
             // return stream_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
-            $ret = @stream_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
+            return @stream_select($read, $write, $except, $timeout === null ? null : 0, $timeout);
         }
 
         usleep($timeout);

@@ -1,7 +1,8 @@
 <?php
-namespace Kohkimakimoto\Worker;
+namespace Kohkimakimoto\Worker\Job;
 
 use Cron\CronExpression;
+use Symfony\Component\Finder\Finder;
 use DateTime;
 
 /**
@@ -15,32 +16,25 @@ class Job
 
     protected $command;
 
+    protected $config;
+
     protected $lastRunTime;
 
     protected $nextRunTime;
 
-    protected $minute = '*';
-
-    protected $hour = '*';
-
-    protected $dayOfMonth = '*';
-
-    protected $month = '*';
-
-    protected $dayOfWeek = '*';
-
     protected $lockFile;
-
-    protected $worker;
 
     protected $eventLoop;
 
     protected $cronTime;
 
-    public function __construct($id, $name, $command, $worker)
+    protected $maxProcesses;
+
+    public function __construct($id, $name, $command, $config)
     {
         $this->id = $id;
         $this->name = $name;
+        $this->config = $config;
 
         if (is_string($command)) {
             // Command line string.
@@ -50,13 +44,20 @@ class Job
             $this->command = $command;
         } elseif (is_array($command)) {
             // array
-            if (isset($command["onTick"])) {
-                $this->command = $command["onTick"];
+            if (isset($command["command"])) {
+                $this->command = $command["command"];
             }
 
-            if (isset($command["cronTime"])) {
-                $this->cronTime = $command["cronTime"];
+            if (isset($command["cron_time"])) {
+                $this->cronTime = $command["cron_time"];
             }
+
+            if (isset($command["max_processes"])) {
+                $this->maxProcesses = $command["max_processes"];
+            } else {
+                $this->maxProcesses = false;
+            }
+
         } else {
             throw new \InvalidArgumentException("Unsupported type of 'command'.");
         }
@@ -64,8 +65,6 @@ class Job
         if ($this->cronTime) {
             $this->cronExpression = CronExpression::factory($this->cronTime);
         }
-
-        $this->worker = $worker;
     }
 
     public function getName()
@@ -82,31 +81,11 @@ class Job
         }
     }
 
-    public function lock()
+    public function makeRuntimeJob()
     {
-        $this->lockFile = tempnam(sys_get_temp_dir(), $this->worker->getName().".job.");
-    }
+        $runtimeJob = new RuntimeJob($this->config, $this);
 
-    public function unlock()
-    {
-        if ($this->lockFile) {
-            unlink($this->lockFile);
-            $this->lockFile = null;
-        }
-    }
-
-    /**
-     * Determin if the job is locked.
-     *
-     * @return boolean
-     */
-    public function locked()
-    {
-        if (!$this->lockFile) {
-            return false;
-        }
-
-        return file_exists($this->lockFile);
+        return $runtimeJob;
     }
 
     public function updateNextRunTime()
@@ -128,14 +107,37 @@ class Job
         return $ret;
     }
 
+    public function getMaxProcesses()
+    {
+        return $this->maxProcesses;
+    }
+    public function numberOfRuntimeProcesses()
+    {
+        $dir = $this->config->getTmpDir();
+        $prefix = $this->prefixOfRunFile();
+
+        $finder = new Finder();
+        $finder
+            ->files()
+            ->in($dir)
+            ->name($prefix.'*')
+            ;
+
+        return count($finder);
+    }
+
+    public function isLimitOfProcesses()
+    {
+        if (!$this->maxProcesses) {
+            return false;
+        }
+
+        return ($this->maxProcesses <= $this->numberOfRuntimeProcesses());
+    }
+
     public function getId()
     {
         return $this->id;
-    }
-
-    public function getLockFile()
-    {
-        return $this->lockFile;
     }
 
     public function setLastRunTime($lastRunTime)
@@ -156,5 +158,10 @@ class Job
     public function getCommand()
     {
         return $this->command;
+    }
+
+    public function prefixOfRunFile()
+    {
+        return $this->config->getName().".job.".$this->getName().".";
     }
 }
