@@ -9,6 +9,8 @@ class Config
 
     protected $isDebug;
 
+    protected $tmpDir;
+
     public function __construct($config)
     {
         if (isset($config["name"])) {
@@ -22,6 +24,12 @@ class Config
         } else {
             $this->isDebug = false;
         }
+
+        if (isset($config["tmp_dir"]) && $config["tmp_dir"]) {
+            $this->tmpDir = $config["tmp_dir"];
+        } else {
+            $this->tmpDir = sys_get_temp_dir();
+        }
     }
 
     public function getName()
@@ -32,5 +40,10 @@ class Config
     public function isDebug()
     {
         return $this->isDebug;
+    }
+
+    public function getTmpDir()
+    {
+        return $this->tmpDir;
     }
 }

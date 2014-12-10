@@ -24,10 +24,9 @@ class RuntimeJob
         $this->config = $config;
         $this->job = $job;
 
-        $dir = sys_get_temp_dir();
-        $file = $this->config->getName()
-            .".job.".$this->job->getName()
-            .".".spl_object_hash($this);
+        $dir = $config->getTmpDir();
+        $file = uniqid($job->prefixOfRunFile())
+            .spl_object_hash($this);
 
         $this->runFile = $dir."/".$file;
     }

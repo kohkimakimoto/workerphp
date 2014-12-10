@@ -2,6 +2,7 @@
 namespace Kohkimakimoto\Worker\Job;
 
 use Cron\CronExpression;
+use Symfony\Component\Finder\Finder;
 use DateTime;
 
 /**
@@ -27,9 +28,7 @@ class Job
 
     protected $cronTime;
 
-    protected $numberOfProcesses;
-
-    protected $runtimeJobs = [];
+    protected $maxProcesses;
 
     public function __construct($id, $name, $command, $config)
     {
@@ -53,8 +52,10 @@ class Job
                 $this->cronTime = $command["cron_time"];
             }
 
-            if (isset($command["number_of_processes"])) {
-                $this->numberOfProcesses = $command["number_of_processes"];
+            if (isset($command["max_processes"])) {
+                $this->maxProcesses = $command["max_processes"];
+            } else {
+                $this->maxProcesses = false;
             }
 
         } else {
@@ -83,7 +84,7 @@ class Job
     public function makeRuntimeJob()
     {
         $runtimeJob = new RuntimeJob($this->config, $this);
-        $this->runtimeJobs[] = $runtimeJob;
+
         return $runtimeJob;
     }
 
@@ -104,6 +105,34 @@ class Job
         }
 
         return $ret;
+    }
+
+    public function getMaxProcesses()
+    {
+        return $this->maxProcesses;
+    }
+    public function numberOfRuntimeProcesses()
+    {
+        $dir = $this->config->getTmpDir();
+        $prefix = $this->prefixOfRunFile();
+
+        $finder = new Finder();
+        $finder
+            ->files()
+            ->in($dir)
+            ->name($prefix.'*')
+            ;
+
+        return count($finder);
+    }
+
+    public function isLimitOfProcesses()
+    {
+        if (!$this->maxProcesses) {
+            return false;
+        }
+
+        return ($this->maxProcesses <= $this->numberOfRuntimeProcesses());
     }
 
     public function getId()
@@ -131,8 +160,8 @@ class Job
         return $this->command;
     }
 
-    public function getRuntimJobs()
+    public function prefixOfRunFile()
     {
-        return $this->runtimeJobs;
+        return $this->config->getName().".job.".$this->getName().".";
     }
 }

@@ -48,29 +48,6 @@ class JobManager
         }
     }
 
-    public function removeAllRunFilesOfRuntimeJobs()
-    {
-        if ($this->output->isDebug()) {
-            $this->output->writeln("[debug] Try to remove all run files of the jobs.");
-        }
-
-        foreach ($this->jobs as $job) {
-
-/*
-            if ($job->locked()) {
-                $file = $job->getLockFile();
-                $job->unlock();
-                if ($this->output->isDebug()) {
-                    $this->output->writeln("[debug] Job unlock: removed file '".$file."' (job_id: ".$job->getId().")");
-                }
-            } else {
-                $this->output->writeln("[debug] The job (job_id: ".$job->getId().") already unlocked. ");
-            }
-*/
-
-        }
-    }
-
     protected function addJobAsTimer($job)
     {
         $job->updateNextRunTime();
@@ -79,12 +56,13 @@ class JobManager
 
         $this->eventLoop->addTimer($secondsOfTimer, function () use ($job, $worker) {
             $id = $job->getId();
+            $name = $job->getName();
             $output = $worker->output;
 
             $now = new \DateTime();
 
             if ($output->isDebug()) {
-                $output->writeln("[debug] Try running a job: (job_id: $id) at ".$now->format('Y-m-d H:i:s'));
+                $output->writeln("[debug] Try running a job: $name at ".$now->format('Y-m-d H:i:s'));
             }
 
             $runtimeJob = $job->makeRuntimeJob();
@@ -122,16 +100,21 @@ class JobManager
                 }
 
                 if ($output->isDebug()) {
-                    $output->writeln("[debug] Forked process for (job_id: ".$id.") (pid:".posix_getpid().")");
+                    $output->writeln("[debug] Forked process for: $name (pid:".posix_getpid().")");
+                }
+
+                if ($job->isLimitOfProcesses()) {
+                    $output->writeln("<fg=magenta>Skip the job '$name' due to limit of max processes: ".$job->getMaxProcesses()." at ".$now->format('Y-m-d H:i:s')."</fg=magenta>");
+                    exit;
                 }
 
                 $runtimeJob->createRunFileWithPid(posix_getpid());
                 if ($output->isDebug()) {
-                    $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' (job_id: $id).");
+                    $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' for running job: $name");
                 }
 
                 $command = $job->getCommand();
-                $output->writeln("<info>Running job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$id."</comment>) at ".$now->format('Y-m-d H:i:s'));
+                $output->writeln("<info>Running job:</info> <comment>$name</comment> at ".$now->format('Y-m-d H:i:s'));
 
                 if ($command instanceof \Closure) {
                     // command is a closure
@@ -151,7 +134,7 @@ class JobManager
                 $file = $runtimeJob->getRunFile();
                 $runtimeJob->removeRunFile();
                 if ($output->isDebug()) {
-                    $output->writeln("[debug] Removed run file '".$file."' (job_id: $id).");
+                    $output->writeln("[debug] Removed run file '".$file."'. Finished the job: $name");
                 }
 
                 exit;
@@ -159,7 +142,7 @@ class JobManager
         });
 
         if ($this->output->isDebug()) {
-            $this->output->writeln("[debug] Added new timer: '".$job->getNextRunTime()->format('Y-m-d H:i:s')."' (after ".$secondsOfTimer." seconds) (job_id: ".$job->getId().").");
+            $this->output->writeln("[debug] Added new timer: '".$job->getNextRunTime()->format('Y-m-d H:i:s')."' (after ".$secondsOfTimer." seconds) (job: ".$job->getName().").");
         }
     }
 
