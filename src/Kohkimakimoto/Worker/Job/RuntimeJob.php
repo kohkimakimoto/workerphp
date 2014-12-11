@@ -58,4 +58,56 @@ class RuntimeJob
     {
         return $this->runFile;
     }
+
+    public function addEntryToJobInfo()
+    {
+        $path = $this->job->getInfoFilePath();
+        if (!file_exists($path)) {
+            throw new \RuntimeException("$path not found");
+        }
+
+        $fp = fopen($path, "ab+");
+        if (flock($fp, LOCK_EX)) {
+            $contents = fread($fp, filesize($path));
+            $info = json_decode($contents, true);
+            if (!$info) {
+                $info = ["runtime_jobs" => []];
+            }
+            $info["runtime_jobs"]["pid-".$this->pid] = ["file" => $this->runFile];
+            $contents = json_encode($info, JSON_PRETTY_PRINT);
+            ftruncate($fp, 0);
+            fwrite($fp, $contents);
+        } else {
+            throw new \RuntimeException("Coundn't have a lock form $path");
+        }
+
+        fclose($fp);
+    }
+
+    public function deleteEntryToJobInfo()
+    {
+        $path = $this->job->getInfoFilePath();
+        if (!file_exists($path)) {
+            throw new \RuntimeException("$path not found");
+        }
+
+        $fp = fopen($path, "ab+");
+        if (flock($fp, LOCK_EX)) {
+            $contents = fread($fp, filesize($path));
+            $info = json_decode($contents, true);
+            if (!$info) {
+                $info = ["runtime_jobs" => []];
+            }
+            if (isset($info["runtime_jobs"]["pid-".$this->pid])) {
+                unset($info["runtime_jobs"]["pid-".$this->pid]);
+                $contents = json_encode($info, JSON_PRETTY_PRINT);
+            }
+            ftruncate($fp, 0);
+            fwrite($fp, $contents);
+        } else {
+            throw new \RuntimeException("Coundn't have a lock form $path");
+        }
+
+        fclose($fp);
+    }
 }

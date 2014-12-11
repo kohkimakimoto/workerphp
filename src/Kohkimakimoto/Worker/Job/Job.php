@@ -168,4 +168,22 @@ class Job
     {
         return $this->config->getName().".job.".$this->getName().".";
     }
+
+    public function initInfoFile()
+    {
+        $file = $this->getInfoFilePath();
+
+        if (file_exists($file)) {
+            unlink($file);
+        }
+
+        file_put_contents($file, '{}');
+    }
+
+    public function getInfoFilePath()
+    {
+        $dir = $this->config->getTmpDir();
+
+        return $dir."/".$this->config->getName().".".$this->getName().".info.json";
+    }
 }

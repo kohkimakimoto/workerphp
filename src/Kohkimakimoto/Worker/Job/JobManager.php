@@ -41,6 +41,7 @@ class JobManager
         foreach ($this->jobs as $job) {
             $this->output->writeln("<info>Initializing job:</info> <comment>".$job->getName()."</comment> (job_id: <comment>".$job->getId()."</comment>)");
             $job->setLastRunTime($bootTime);
+            $job->initInfoFile();
             if ($job->hasCronTime()) {
                 $this->addJobTimer($job);
             }
@@ -123,9 +124,10 @@ class JobManager
                 $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' for running job: $name");
             }
 
-            $command = $job->getCommand();
+            $runtimeJob->addEntryToJobInfo();
             $output->writeln("<info>Running job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
 
+            $command = $job->getCommand();
             if ($command instanceof \Closure) {
                 // command is a closure
                 call_user_func($command, $worker);
@@ -146,6 +148,8 @@ class JobManager
             if ($output->isDebug()) {
                 $output->writeln("[debug] Removed run file '".$file."'. Finished the job: $name");
             }
+
+            $runtimeJob->deleteEntryToJobInfo();
 
             exit;
         }
