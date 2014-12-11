@@ -10,6 +10,7 @@ class JobServiceProvider extends ServiceProvider
     {
         $worker['job'] = function ($worker) {
             return new JobManager(
+                $worker,
                 $worker['config'],
                 $worker['output'],
                 $worker['eventLoop']

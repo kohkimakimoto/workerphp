@@ -18,6 +18,10 @@ class HttpServer
 
     protected $http;
 
+    protected $socket;
+
+    protected $booted = false;
+
     public function __construct($output, $eventLoop, $controller)
     {
         $this->output = $output;
@@ -41,9 +45,9 @@ class HttpServer
         $routes = new RouteCollection();
         $routes->add('route_name', $route);
 
-        $socket = new ReactSocketServer($this->eventLoop);
-        $http = new ReactHttpServer($socket);
-        $socket->listen($this->port, $this->host);
+        $this->socket = new ReactSocketServer($this->eventLoop);
+        $http = new ReactHttpServer($this->socket);
+        $this->socket->listen($this->port, $this->host);
 
         $controller = $this->controller;
 
@@ -53,6 +57,15 @@ class HttpServer
 
         });
 
+        $this->booted = true;
+
         $this->output->writeln("<info>Initializing http server:</info> <comment>http://".$this->host.":".$this->port."</comment>");
+    }
+
+    public function shutdown()
+    {
+        if ($this->booted) {
+            $this->socket->shutdown();
+        }
     }
 }

@@ -8,14 +8,17 @@ class JobManager
 {
     protected $jobs = [];
 
+    protected $worker;
+
     protected $config;
 
     protected $output;
 
     protected $eventLoop;
 
-    public function __construct($config, $output, $eventLoop)
+    public function __construct($worker, $config, $output, $eventLoop)
     {
+        $this->worker = $worker;
         $this->config = $config;
         $this->output = $output;
         $this->eventLoop = $eventLoop;
@@ -102,8 +105,9 @@ class JobManager
             posix_setsid();
 
             // Stops copied event loop.
-            //$this->eventLoop->stop();
+            $this->eventLoop->stop();
             unset($this->eventLoop);
+            $this->worker["httpServer"]->shutdown();
 
             // Forks it one more time to prevent to be zombie process.
             $pid = pcntl_fork();
