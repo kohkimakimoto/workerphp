@@ -13,9 +13,9 @@
         "pimple/pimple": "~3.0",
         "mtdowling/cron-expression": "1.0.*",
         "react/http": "0.4.*",
+        "symfony/event-dispatcher": "2.6.*",
         "symfony/console": "2.6.*",
         "symfony/process": "2.6.*",
-        "symfony/http-foundation": "2.6",
         "symfony/finder": "2.6.*",
         "symfony/routing": "2.6.*"
     },
