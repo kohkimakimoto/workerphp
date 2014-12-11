@@ -47,6 +47,7 @@ class Worker extends Container
         $providers = [
             'Kohkimakimoto\Worker\Job\JobServiceProvider',
             'Kohkimakimoto\Worker\Http\HttpServerServiceProvider',
+            'Kohkimakimoto\Worker\Stat\StatServiceProvider',
         ];
 
         foreach ($providers as $provider) {
