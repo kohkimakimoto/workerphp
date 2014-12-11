@@ -129,10 +129,22 @@ $worker->start();
 When WorkerPHP starts, It listens port `8080`. You can get infomation using http request.
 
 ```
-$ curl -XPGET http://localhost:8080/
-{"name":"WorkerPHP","number_of_jobs":2,"jobs":[{"id":0,"name":"uptime"},{"id":1,"name":"hello"}]
+$ curl -XPGET http://localhost:8080/?pretty=1
+{
+    "name": "WorkerPHP",
+    "number_of_jobs": 2,
+    "jobs": [
+        {
+            "id": 0,
+            "name": "hello"
+        },
+        {
+            "id": 1,
+            "name": "uptime"
+        }
+    ]
+}
 ```
-
 
 ## Author
 
