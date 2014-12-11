@@ -5,6 +5,7 @@ use Pimple\Container;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
+use Kohkimakimoto\Worker\Config\Config;
 use Kohkimakimoto\Worker\EventLoop\Factory;
 
 /**
@@ -12,19 +13,11 @@ use Kohkimakimoto\Worker\EventLoop\Factory;
  */
 class Worker extends Container
 {
-    protected $output;
-
-    protected $eventLoop;
-
-    protected $httpServerPort;
-
-    protected $httpServerHost;
-
-    protected $providers = [];
+    protected $masterPid;
 
     protected $finished;
 
-    protected $masterPid;
+    protected $providers = [];
 
     /**
      * Constructor.
@@ -36,18 +29,16 @@ class Worker extends Container
         $this->masterPid = posix_getpid();
         $this->finished = false;
 
-        $this["event_loop"] = Factory::create();
+        // Registers fundamental instances.
+        $this['config'] = new Config($config);
+        $this["eventLoop"] = Factory::create();
         $this["output"] = new ConsoleOutput();
-        $this["config"] = new Config($config);
 
-        $this->output = $this["output"];
-        $this->eventLoop = $this["event_loop"];
-        $this->config = $this["config"];
-
-        if ($this->config->isDebug()) {
+        if ($this['config']->isDebug()) {
             $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
 
+        // Registers default providers.
         $this->registerDefaultProviders();
     }
 

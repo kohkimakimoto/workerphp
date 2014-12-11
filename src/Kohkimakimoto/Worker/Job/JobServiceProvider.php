@@ -12,7 +12,7 @@ class JobServiceProvider extends ServiceProvider
             return new JobManager(
                 $worker['config'],
                 $worker['output'],
-                $worker['event_loop']
+                $worker['eventLoop']
             );
         };
     }
