@@ -63,6 +63,12 @@ class HttpController
 
     public function indexAction($request, $response, $parameters)
     {
+        $pretty = false;
+        $query = $request->getQuery();
+        if (isset($query['pretty']) && $query['pretty'] && $query['pretty'] != "false") {
+            $pretty = true;
+        }
+
         $jobs = $this->jobManager->getJobs();
 
         $jobsList = [];
@@ -79,12 +85,23 @@ class HttpController
         ];
 
         $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
-        $response->end(json_encode($contents));
+        if ($pretty) {
+            $output = json_encode($contents, JSON_PRETTY_PRINT);
+        } else {
+            $output = json_encode($contents);
+        }
+        $response->end($output);
         $this->outputAccessLog($request, 200);
     }
 
     public function jobsAction($request, $response, $parameters)
     {
+        $pretty = false;
+        $query = $request->getQuery();
+        if (isset($query['pretty']) && $query['pretty'] && $query['pretty'] != "false") {
+            $pretty = true;
+        }
+
         $jobs = $this->jobManager->getJobs();
         $contents = [];
 
@@ -96,12 +113,23 @@ class HttpController
         }
 
         $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
-        $response->end(json_encode($contents));
+        if ($pretty) {
+            $output = json_encode($contents, JSON_PRETTY_PRINT);
+        } else {
+            $output = json_encode($contents);
+        }
+        $response->end($output);
         $this->outputAccessLog($request, 200);
     }
 
     public function jobAction($request, $response, $parameters)
     {
+        $pretty = false;
+        $query = $request->getQuery();
+        if (isset($query['pretty']) && $query['pretty'] && $query['pretty'] != "false") {
+            $pretty = true;
+        }
+
         $name = $parameters["name"];
         $method = strtolower($request->getMethod());
         $job = $this->jobManager->getJob($name);
@@ -124,7 +152,7 @@ class HttpController
                 $buffer .= $data;
             });
 
-            $stream->on('end', function($stream) use ($job, $response, $request, $self, &$buffer){
+            $stream->on('end', function($stream) use ($job, $response, $request, $self, &$buffer, $pretty) {
                 $info = json_decode($buffer, true);
 
                 $number = 0;
@@ -138,7 +166,12 @@ class HttpController
                 $contents['number_of_running_jobs'] = $number;
 
                 $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
-                $response->end(json_encode($contents));
+                if ($pretty) {
+                    $output = json_encode($contents, JSON_PRETTY_PRINT);
+                } else {
+                    $output = json_encode($contents);
+                }
+                $response->end($output);
                 $this->outputAccessLog($request, 200);
             });
         } elseif ($method == 'post') {
