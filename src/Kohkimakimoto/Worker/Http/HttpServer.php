@@ -29,7 +29,7 @@ class HttpServer
         $this->controller = $controller;
     }
 
-    public function bind($port, $host)
+    public function listen($port = 8080, $host = '0.0.0.0')
     {
         $this->port = $port;
         $this->host = $host;

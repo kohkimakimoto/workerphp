@@ -122,7 +122,7 @@ class JobManager
             }
 
             if ($job->isLimitOfProcesses()) {
-                $output->writeln("<fg=magenta>Skip the job '$name' due to limit of max processes: ".$job->getMaxProcesses()." at ".$now->format('Y-m-d H:i:s')."</fg=magenta>");
+                $output->writeln("<fg=magenta>Skip the job '$name' due to limit of max processes: ".$job->getMaxProcesses()." at ".(new \DateTime())->format('Y-m-d H:i:s')."</fg=magenta>");
                 exit;
             }
 
@@ -131,7 +131,7 @@ class JobManager
                 $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' for running job: $name");
             }
 
-            $output->writeln("<info>Runs job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
+            $output->writeln("<info>Runs job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".(new \DateTime())->format('Y-m-d H:i:s'));
             $runtimeJob->addEntryToJobInfo();
 
             $command = $job->getCommand();
@@ -157,7 +157,7 @@ class JobManager
             }
 
             $runtimeJob->deleteEntryToJobInfo();
-            $output->writeln("<info>Finished job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
+            $output->writeln("<info>Finished job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".(new \DateTime())->format('Y-m-d H:i:s'));
 
             exit;
         }

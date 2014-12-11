@@ -137,13 +137,6 @@ class Worker extends Container
         return $this;
     }
 
-    public function httpServer($port, $host = '127.0.0.1')
-    {
-        $this->httpServer->bind($port, $host);
-
-        return $this;
-    }
-
     public function __get($key)
     {
         return $this[$key];
