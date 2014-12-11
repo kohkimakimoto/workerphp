@@ -50,6 +50,8 @@ $ composer install
 
 ## Usage
 
+### bootstrap
+
 To make a job scheduler application like cron, create `worker.php` file (or other name you want).
 You need to load composer `autoload.php` file and create an instance of `Kohkimakimoto\Worker\Worker`.
 
@@ -72,6 +74,8 @@ $ php worker.php
 Starting WorkerPHP.
 Successfully booted. Quit working with CONTROL-C.
 ```
+
+### jobs
 
 Define a job before line of `$worker->start()`.
 
@@ -115,7 +119,7 @@ Running job: uptime (pid: 36651) at 2014-12-04 12:38:00
 12:38  up 8 days, 16:07, 6 users, load averages: 1.68 1.72 1.81
 ```
 
-## Http Server (Web APIs)
+### Http Server (Web APIs)
 
 WorkerPHP has a built-in http server. It provides APIs that controls jobs using HTTP requests. Write the following code.
 
