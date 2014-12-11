@@ -54,12 +54,11 @@ class JobManager
     protected function addJobTimer($job)
     {
         $job->updateNextRunTime();
-        $worker = $this;
         $secondsOfTimer = $job->secondsUntilNextRuntime();
 
         $self = $this;
-        $this->eventLoop->addTimer($secondsOfTimer, function () use ($self, $job, $worker) {
-            $self->executeJob($job, $worker);
+        $this->eventLoop->addTimer($secondsOfTimer, function () use ($self, $job) {
+            $self->executeJob($job);
         });
 
         if ($this->output->isDebug()) {
@@ -67,11 +66,11 @@ class JobManager
         }
     }
 
-    protected function executeJob($job, $worker)
+    public function executeJob($job)
     {
         $id = $job->getId();
         $name = $job->getName();
-        $output = $worker->output;
+        $output = $this->output;
 
         $now = new \DateTime();
 
@@ -97,7 +96,7 @@ class JobManager
 
             // add next timer
             if ($job->hasCronTime()) {
-                $worker->addJobTimer($job);
+                $this->addJobTimer($job);
             }
         } else {
             // Child process
@@ -138,7 +137,7 @@ class JobManager
             $command = $job->getCommand();
             if ($command instanceof \Closure) {
                 // command is a closure
-                call_user_func($command, $worker);
+                call_user_func($command, $this->worker);
             } elseif (is_string($command)) {
                 // command is a string
                 $process = new Process($command);

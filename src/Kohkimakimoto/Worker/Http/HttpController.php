@@ -32,7 +32,7 @@ class HttpController
         $this->routes = new RouteCollection();
         $this->routes->add('index', new Route('/', ['_action' => 'indexAction']));
         $this->routes->add('jobs', new Route('/jobs', ['_action' => 'jobsAction']));
-        $this->routes->add('jobs_info', new Route('/jobs/{name}', ['_action' => 'jobsInfoAction']));
+        $this->routes->add('job', new Route('/jobs/{name}', ['_action' => 'jobAction']));
     }
 
     public function execute($request, $response)
@@ -63,9 +63,19 @@ class HttpController
 
     public function indexAction($request, $response, $parameters)
     {
+        $jobs = $this->jobManager->getJobs();
+
+        $jobsList = [];
+        foreach ($jobs as $v) {
+            $jobsList[] = [
+                "id" => $v->getId(),
+                "name" => $v->getName()
+            ];
+        }
         $contents = [
             "name" => $this->config->getName(),
-            "number_of_jobs" => count($this->jobManager->getJobs()),
+            "number_of_jobs" => count($jobs),
+            "jobs" => $jobsList,
         ];
 
         $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
@@ -90,11 +100,12 @@ class HttpController
         $this->outputAccessLog($request, 200);
     }
 
-    public function jobsInfoAction($request, $response, $parameters)
+    public function jobAction($request, $response, $parameters)
     {
         $name = $parameters["name"];
-
+        $method = strtolower($request->getMethod());
         $job = $this->jobManager->getJob($name);
+
         if (!$job) {
             $response->writeHead(404, array('Content-Type' => 'text/plain'));
             $response->end("Not found\n");
@@ -102,31 +113,46 @@ class HttpController
             return;
         }
 
-        $stream = new Stream(fopen($job->getInfoFilePath(), 'r'), $this->eventLoop);
+        if ($method == 'get') {
+            // print job info
+            $stream = new Stream(fopen($job->getInfoFilePath(), 'r'), $this->eventLoop);
 
-        $buffer = null;
-        $self = $this;
+            $buffer = null;
+            $self = $this;
 
-        $stream->on('data', function($data, $stream) use (&$buffer) {
-            $buffer .= $data;
-        });
+            $stream->on('data', function($data, $stream) use (&$buffer) {
+                $buffer .= $data;
+            });
 
-        $stream->on('end', function($stream) use ($job, $response, $request, $self, &$buffer){
-            $info = json_decode($buffer, true);
+            $stream->on('end', function($stream) use ($job, $response, $request, $self, &$buffer){
+                $info = json_decode($buffer, true);
 
-            $number = 0;
-            if (isset($info["runtime_jobs"])) {
-                $number = count($info["runtime_jobs"]);
-            }
+                $number = 0;
+                if (isset($info["runtime_jobs"])) {
+                    $number = count($info["runtime_jobs"]);
+                }
 
-            $contents = [];
-            $contents['id'] = $job->getId();
-            $contents['name'] = $job->getName();
-            $contents['number_of_running_jobs'] = $number;
+                $contents = [];
+                $contents['id'] = $job->getId();
+                $contents['name'] = $job->getName();
+                $contents['number_of_running_jobs'] = $number;
 
-            $response->writeHead(200, array('Content-Type' => 'text/plain'));
+                $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
+                $response->end(json_encode($contents));
+                $this->outputAccessLog($request, 200);
+            });
+        } elseif ($method == 'post') {
+            // run job
+            $this->jobManager->executeJob($job);
+
+            $contents = ["OK"];
+            $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
             $response->end(json_encode($contents));
             $this->outputAccessLog($request, 200);
-        });
+        } else {
+            $response->writeHead(404, array('Content-Type' => 'text/plain'));
+            $response->end("Not found\n");
+            $this->outputAccessLog($request, 404);
+        }
     }
 }
