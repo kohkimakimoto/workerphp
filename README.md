@@ -115,16 +115,24 @@ Running job: uptime (pid: 36651) at 2014-12-04 12:38:00
 
 ## Http Server (Web APIs)
 
-WorkerPHP has a builtin http server. It provides APIs that controls jobs using HTTP requests. Write the following code.
+WorkerPHP has a built-in http server. It provides APIs that controls jobs using HTTP requests. Write the following code.
 
 ```php
 $worker = new \Kohkimakimoto\Worker\Worker();
-$worker->httpServer->listen(8080);
+$worker->httpServer->listen();
 
 // ...
 
 $worker->start();
 ```
+
+When WorkerPHP starts, It listens port `8080`. You can get infomation using http request.
+
+```
+$ curl -XPGET http://localhost:8080/
+{"name":"WorkerPHP","number_of_jobs":2,"jobs":[{"id":0,"name":"uptime"},{"id":1,"name":"hello"}]
+```
+
 
 ## Author
 
