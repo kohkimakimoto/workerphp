@@ -66,7 +66,7 @@ class JobManager
         }
     }
 
-    public function executeJob($job)
+    public function executeJob($job, $oneTime = false)
     {
         $id = $job->getId();
         $name = $job->getName();
@@ -95,7 +95,7 @@ class JobManager
             $job->setLastRunTime($now);
 
             // add next timer
-            if ($job->hasCronTime()) {
+            if ($job->hasCronTime() && !$oneTime) {
                 $this->addJobTimer($job);
             }
         } else {

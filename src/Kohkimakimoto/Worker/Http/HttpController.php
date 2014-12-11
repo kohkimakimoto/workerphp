@@ -143,7 +143,7 @@ class HttpController
             });
         } elseif ($method == 'post') {
             // run job
-            $this->jobManager->executeJob($job);
+            $this->jobManager->executeJob($job, true);
 
             $contents = ["OK"];
             $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
