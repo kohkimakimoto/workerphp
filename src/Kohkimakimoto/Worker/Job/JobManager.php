@@ -101,6 +101,10 @@ class JobManager
             // Remove tty to ignore signals from tty.
             posix_setsid();
 
+            // Stops copied event loop.
+            //$this->eventLoop->stop();
+            unset($this->eventLoop);
+
             // Forks it one more time to prevent to be zombie process.
             $pid = pcntl_fork();
             if ($pid === -1) {
@@ -124,8 +128,8 @@ class JobManager
                 $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' for running job: $name");
             }
 
+            $output->writeln("<info>Runs job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
             $runtimeJob->addEntryToJobInfo();
-            $output->writeln("<info>Running job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
 
             $command = $job->getCommand();
             if ($command instanceof \Closure) {
@@ -150,6 +154,7 @@ class JobManager
             }
 
             $runtimeJob->deleteEntryToJobInfo();
+            $output->writeln("<info>Finished job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".$now->format('Y-m-d H:i:s'));
 
             exit;
         }
@@ -158,5 +163,10 @@ class JobManager
     public function getJobs()
     {
         return $this->jobs;
+    }
+
+    public function getJob($name)
+    {
+        return isset($this->jobs[$name]) ? $this->jobs[$name] : null;
     }
 }

@@ -10,7 +10,7 @@ $worker->httpServer("8888", "localhost");
 $worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
 $worker->job("hello", ['cron_time' => '* * * * *', 'max_processes' => 10, 'command' => function(){
     echo "hello\n";
-    sleep(130);
-}]);
+    sleep(100)
+;}]);
 
 $worker->start();

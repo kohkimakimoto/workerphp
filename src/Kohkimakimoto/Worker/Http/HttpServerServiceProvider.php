@@ -10,6 +10,7 @@ class HttpServerServiceProvider extends ServiceProvider
     {
         $worker['httpController'] = function ($worker) {
             return new HttpController(
+                $worker['eventLoop'],
                 $worker['config'],
                 $worker['output'],
                 $worker['job']
