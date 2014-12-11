@@ -113,7 +113,7 @@ Running job: uptime (pid: 36651) at 2014-12-04 12:38:00
 12:38  up 8 days, 16:07, 6 users, load averages: 1.68 1.72 1.81
 ```
 
-## Http Server
+## Http Server (Web APIs)
 
 WorkerPHP has a builtin http server. It provides APIs that controls jobs using HTTP requests. Write the following code.
 
