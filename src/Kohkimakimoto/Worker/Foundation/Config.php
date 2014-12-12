@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Config;
+namespace Kohkimakimoto\Worker\Foundation;
 
 class Config
 {

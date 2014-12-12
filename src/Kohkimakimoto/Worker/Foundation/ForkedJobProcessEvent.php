@@ -1,16 +1,17 @@
 <?php
-namespace Kohkimakimoto\Worker\Event;
+namespace Kohkimakimoto\Worker\Foundation;
 
 use Kohkimakimoto\Worker\Worker;
 use Symfony\Component\EventDispatcher\Event;
 
-class WorkerStartEvent extends Event
+class ForkedJobProcessEvent extends Event
 {
     private $worker;
 
-    public function __construct(Worker $worker)
+    public function __construct(Worker $worker, $job)
     {
         $this->worker = $worker;
+        $this->job = $job;
     }
 
     public function getWorker()

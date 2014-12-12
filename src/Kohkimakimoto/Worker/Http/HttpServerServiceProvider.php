@@ -1,7 +1,7 @@
 <?php
 namespace Kohkimakimoto\Worker\Http;
 
-use Kohkimakimoto\Worker\ServiceProvider;
+use Kohkimakimoto\Worker\Foundation\ServiceProvider;
 use Kohkimakimoto\Worker\Worker;
 
 class HttpServerServiceProvider extends ServiceProvider
@@ -24,6 +24,8 @@ class HttpServerServiceProvider extends ServiceProvider
                 $worker['httpController']
             );
         };
+
+        $worker->dispatcher->addSubscriber(new HttpEventListener());
     }
 
     public function start(Worker $worker)

@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Job;
+namespace Kohkimakimoto\Worker\Foundation;
 
 use Cron\CronExpression;
 use DateTime;

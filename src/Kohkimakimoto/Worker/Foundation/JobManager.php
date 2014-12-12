@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Job;
+namespace Kohkimakimoto\Worker\Foundation;
 
 use Kohkimakimoto\Worker\Worker;
 use Symfony\Component\Process\Process;
@@ -10,15 +10,18 @@ class JobManager
 
     protected $worker;
 
+    protected $dispatcher;
+
     protected $config;
 
     protected $output;
 
     protected $eventLoop;
 
-    public function __construct($worker, $config, $output, $eventLoop)
+    public function __construct($worker, $dispatcher, $config, $output, $eventLoop)
     {
         $this->worker = $worker;
+        $this->dispatcher = $dispatcher;
         $this->config = $config;
         $this->output = $output;
         $this->eventLoop = $eventLoop;
@@ -106,6 +109,9 @@ class JobManager
             // Stops copied event loop.
             $this->eventLoop->stop();
             unset($this->eventLoop);
+
+            $this->dispatcher->dispatch(Events::FORKED_JOB_PROCESS, new ForkedJobProcessEvent($this->worker, $job));
+
             $this->worker["httpServer"]->shutdown();
 
             // Forks it one more time to prevent to be zombie process.
