@@ -59,7 +59,7 @@ class HttpServer
 
         $this->booted = true;
 
-        $this->output->writeln("<info>Initializing http server:</info> <comment>http://".$this->host.":".$this->port."</comment>");
+        $this->output->writeln("<info>Initializing http server:</info> <comment>http://".$this->host.":".$this->port."/</comment>");
     }
 
     public function shutdown()

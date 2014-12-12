@@ -7,4 +7,5 @@ final class Events
 
     const FORKED_JOB_PROCESS = 'worker.forked_job_process';
 
+    const SHUTTING_DOWN_WORKER = 'worker.shutting_down_worker';
 }

@@ -10,6 +10,8 @@ use Kohkimakimoto\Worker\Foundation\Config;
 use Kohkimakimoto\Worker\EventLoop\Factory;
 use Kohkimakimoto\Worker\Foundation\Events;
 use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
+use Kohkimakimoto\Worker\Foundation\ShuttingDownWorkerEvent;
+use Kohkimakimoto\Worker\Foundation\JobEventListener;
 use Kohkimakimoto\Worker\Foundation\JobManager;
 
 class Worker extends Container
@@ -47,7 +49,7 @@ class Worker extends Container
             $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
 
-        //$this->dispatcher->addSubscriber();
+        $this->dispatcher->addSubscriber(new JobEventListener());
 
         // Registers default providers.
         $this->registerDefaultProviders();
@@ -57,7 +59,7 @@ class Worker extends Container
     {
         $providers = [
             'Kohkimakimoto\Worker\Http\HttpServerServiceProvider',
-            'Kohkimakimoto\Worker\Stat\StatServiceProvider',
+            'Kohkimakimoto\Worker\Stats\StatsServiceProvider',
         ];
 
         foreach ($providers as $provider) {
@@ -88,15 +90,9 @@ class Worker extends Container
         pcntl_signal(SIGTERM, array($this, "signalHandler"));
         pcntl_signal(SIGINT, array($this, "signalHandler"));
 
-        $this->job->boot();
-
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
         $this->dispatcher->dispatch(Events::STARTED_WORKER, new StartedWorkerEvent($this));
-
-        foreach ($this->providers as $provider) {
-            $provider->start($this);
-        }
 
         $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
 
@@ -135,9 +131,8 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-            foreach ($this->providers as $provider) {
-                $provider->shutdown($this);
-            }
+
+            $this->dispatcher->dispatch(Events::SHUTTING_DOWN_WORKER, new ShuttingDownWorkerEvent($this));
 
             $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");
             $this->finished = true;

@@ -1,12 +1,11 @@
 <?php
-namespace Kohkimakimoto\Worker\Http;
+namespace Kohkimakimoto\Worker\Foundation;
 
-use Kohkimakimoto\Worker\Foundation\ForkedJobProcessEvent;
 use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Kohkimakimoto\Worker\Foundation\Events;
 
-class HttpEventListener implements EventSubscriberInterface
+class JobEventListener implements EventSubscriberInterface
 {
     public function __construct()
     {
@@ -16,22 +15,13 @@ class HttpEventListener implements EventSubscriberInterface
     {
         $worker = $event->getWorker();
 
-        $worker->httpServer->boot();
-        $worker->httpController->boot();
-    }
-
-    public function detectedForkedJobProcess(ForkedJobProcessEvent $event)
-    {
-        $worker = $event->getWorker();
-
-        $worker["httpServer"]->shutdown();
+        $worker->job->boot();
     }
 
     public static function getSubscribedEvents()
     {
         return array(
             Events::STARTED_WORKER => 'detectedStartWorker',
-            Events::FORKED_JOB_PROCESS => 'detectedForkedJobProcess',
         );
     }
 }

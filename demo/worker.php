@@ -5,6 +5,7 @@ date_default_timezone_set('Asia/Tokyo');
 $worker = new \Kohkimakimoto\Worker\Worker(["debug" => true, "tmp_dir" => __DIR__."/tmp"]);
 //$worker = new \Kohkimakimoto\Worker\Worker();
 $worker->httpServer->listen();
+$worker->stats->on();
 
 $worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
 
