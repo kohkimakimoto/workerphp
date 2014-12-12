@@ -27,10 +27,4 @@ class HttpServerServiceProvider extends ServiceProvider
 
         $worker->dispatcher->addSubscriber(new HttpEventListener());
     }
-
-    public function start(Worker $worker)
-    {
-        $worker['httpController']->boot();
-        $worker['httpServer']->boot();
-    }
 }

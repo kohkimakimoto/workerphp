@@ -18,4 +18,9 @@ class ForkedJobProcessEvent extends Event
     {
         return $this->worker;
     }
+
+    public function getJob()
+    {
+        return $this->job;
+    }
 }

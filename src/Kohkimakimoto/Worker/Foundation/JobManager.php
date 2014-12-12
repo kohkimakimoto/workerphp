@@ -112,8 +112,6 @@ class JobManager
 
             $this->dispatcher->dispatch(Events::FORKED_JOB_PROCESS, new ForkedJobProcessEvent($this->worker, $job));
 
-            $this->worker["httpServer"]->shutdown();
-
             // Forks it one more time to prevent to be zombie process.
             $pid = pcntl_fork();
             if ($pid === -1) {
