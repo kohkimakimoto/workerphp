@@ -8,14 +8,6 @@ class JobServiceProvider extends ServiceProvider
 {
     public function register(Worker $worker)
     {
-        $worker['job'] = function ($worker) {
-            return new JobManager(
-                $worker,
-                $worker['config'],
-                $worker['output'],
-                $worker['eventLoop']
-            );
-        };
     }
 
     public function start(Worker $worker)

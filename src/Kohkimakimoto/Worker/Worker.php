@@ -5,8 +5,12 @@ use Pimple\Container;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Kohkimakimoto\Worker\Config\Config;
 use Kohkimakimoto\Worker\EventLoop\Factory;
+use Kohkimakimoto\Worker\Event\Events;
+use Kohkimakimoto\Worker\Event\WorkerStartEvent;
+use Kohkimakimoto\Worker\Job\JobManager;
 
 /**
  * Worker
@@ -33,6 +37,13 @@ class Worker extends Container
         $this['config'] = new Config($config);
         $this["eventLoop"] = Factory::create();
         $this["output"] = new ConsoleOutput();
+        $this['dispatcher'] = new EventDispatcher();
+        $this['job'] = new JobManager(
+            $this,
+            $this['config'],
+            $this['output'],
+            $this['eventLoop']
+        );
 
         if ($this['config']->isDebug()) {
             $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
@@ -79,6 +90,8 @@ class Worker extends Container
         pcntl_signal(SIGINT, array($this, "signalHandler"));
 
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
+
+        $this->dispatcher->dispatch(Events::WORKER_START, new WorkerStartEvent($this));
 
         foreach ($this->providers as $provider) {
             $provider->start($this);
