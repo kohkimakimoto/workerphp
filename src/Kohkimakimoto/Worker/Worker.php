@@ -92,7 +92,7 @@ class Worker extends Container
 
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
-        $this->dispatcher->dispatch(Events::STARTED_WORKER, new StartedWorkerEvent($this));
+        $this->dispatcher->dispatch(Events::WORKER_STARTED, new StartedWorkerEvent($this));
 
         // A dummy timer to keep a process on a system.
         $this->eventLoop->addPeriodicTimer(10, function () {});
@@ -131,8 +131,7 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-            $this->dispatcher->dispatch(Events::SHUTTING_DOWN_WORKER, new ShuttingDownWorkerEvent($this));
-
+            $this->dispatcher->dispatch(Events::WORKER_SHUTTING_DOWN, new ShuttingDownWorkerEvent($this));
             $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");
             $this->finished = true;
         }

@@ -3,9 +3,9 @@ namespace Kohkimakimoto\Worker\Foundation;
 
 final class Events
 {
-    const STARTED_WORKER = 'worker.started_worker';
+    const WORKER_STARTED = 'worker.started';
 
-    const FORKED_JOB_PROCESS = 'worker.forked_job_process';
+    const JOB_FORKED_PROCESS = 'job.forked_process';
 
-    const SHUTTING_DOWN_WORKER = 'worker.shutting_down_worker';
+    const WORKER_SHUTTING_DOWN = 'worker.shutting_down';
 }

@@ -9,7 +9,7 @@ class JobEventListener implements EventSubscriberInterface
     {
     }
 
-    public function detectedStartWorker(StartedWorkerEvent $event)
+    public function detectedWorkerStarted(StartedWorkerEvent $event)
     {
         $worker = $event->getWorker();
 
@@ -19,7 +19,7 @@ class JobEventListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            Events::STARTED_WORKER => 'detectedStartWorker',
+            Events::WORKER_STARTED => 'detectedWorkerStarted',
         );
     }
 }

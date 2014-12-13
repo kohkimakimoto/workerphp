@@ -24,7 +24,7 @@ class StatsEventListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            Events::STARTED_WORKER => 'detectedStartWorker',
+            Events::WORKER_STARTED => 'detectedStartWorker',
         );
     }
 }

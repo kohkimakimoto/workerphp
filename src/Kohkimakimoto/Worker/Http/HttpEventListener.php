@@ -30,8 +30,8 @@ class HttpEventListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            Events::STARTED_WORKER => 'detectedStartWorker',
-            Events::FORKED_JOB_PROCESS => 'detectedForkedJobProcess',
+            Events::WORKER_STARTED => 'detectedStartWorker',
+            Events::JOB_FORKED_PROCESS => 'detectedForkedJobProcess',
         );
     }
 }
