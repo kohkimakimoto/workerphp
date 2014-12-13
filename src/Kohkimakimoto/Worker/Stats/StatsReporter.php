@@ -15,4 +15,3 @@ class StatsReporter
         return $this->on;
     }
 }
-

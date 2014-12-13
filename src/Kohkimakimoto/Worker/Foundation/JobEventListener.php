@@ -1,9 +1,7 @@
 <?php
 namespace Kohkimakimoto\Worker\Foundation;
 
-use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Kohkimakimoto\Worker\Foundation\Events;
 
 class JobEventListener implements EventSubscriberInterface
 {

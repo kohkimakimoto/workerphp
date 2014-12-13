@@ -94,10 +94,10 @@ class Worker extends Container
 
         $this->dispatcher->dispatch(Events::STARTED_WORKER, new StartedWorkerEvent($this));
 
-        $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
-
         // A dummy timer to keep a process on a system.
         $this->eventLoop->addPeriodicTimer(10, function () {});
+
+        $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
 
         // Start event loop.
         $this->eventLoop->run();
@@ -131,7 +131,6 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-
             $this->dispatcher->dispatch(Events::SHUTTING_DOWN_WORKER, new ShuttingDownWorkerEvent($this));
 
             $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");

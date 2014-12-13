@@ -1,7 +1,6 @@
 <?php
 namespace Kohkimakimoto\Worker\Stats;
 
-use Kohkimakimoto\Worker\Foundation\ForkedJobProcessEvent;
 use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Kohkimakimoto\Worker\Foundation\Events;

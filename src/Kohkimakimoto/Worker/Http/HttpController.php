@@ -75,7 +75,7 @@ class HttpController
         foreach ($jobs as $v) {
             $jobsList[] = [
                 "id" => $v->getId(),
-                "name" => $v->getName()
+                "name" => $v->getName(),
             ];
         }
         $contents = [
@@ -138,6 +138,7 @@ class HttpController
             $response->writeHead(404, array('Content-Type' => 'text/plain'));
             $response->end("Not found\n");
             $this->outputAccessLog($request, 404);
+
             return;
         }
 
@@ -148,11 +149,11 @@ class HttpController
             $buffer = null;
             $self = $this;
 
-            $stream->on('data', function($data, $stream) use (&$buffer) {
+            $stream->on('data', function ($data, $stream) use (&$buffer) {
                 $buffer .= $data;
             });
 
-            $stream->on('end', function($stream) use ($job, $response, $request, $self, &$buffer, $pretty) {
+            $stream->on('end', function ($stream) use ($job, $response, $request, $self, &$buffer, $pretty) {
                 $info = json_decode($buffer, true);
 
                 $number = 0;

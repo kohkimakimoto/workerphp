@@ -57,7 +57,6 @@ class Job
             } else {
                 $this->maxProcesses = false;
             }
-
         } else {
             throw new \InvalidArgumentException("Unsupported type of 'command'.");
         }
