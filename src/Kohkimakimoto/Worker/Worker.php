@@ -9,8 +9,8 @@ use Symfony\Component\EventDispatcher\EventDispatcher;
 use Kohkimakimoto\Worker\Foundation\Config;
 use Kohkimakimoto\Worker\EventLoop\Factory;
 use Kohkimakimoto\Worker\Foundation\Events;
-use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
-use Kohkimakimoto\Worker\Foundation\ShuttingDownWorkerEvent;
+use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
+use Kohkimakimoto\Worker\Foundation\WorkerShuttingDownEvent;
 use Kohkimakimoto\Worker\Foundation\JobEventListener;
 use Kohkimakimoto\Worker\Foundation\JobManager;
 
@@ -84,7 +84,7 @@ class Worker extends Container
 
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
-        $this->dispatcher->dispatch(Events::WORKER_STARTED, new StartedWorkerEvent($this));
+        $this->dispatcher->dispatch('worker.started', new WorkerStartedEvent($this));
 
         // A dummy timer to keep a process on a system.
         $this->eventLoop->addPeriodicTimer(10, function () {});
@@ -123,7 +123,7 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-            $this->dispatcher->dispatch(Events::WORKER_SHUTTING_DOWN, new ShuttingDownWorkerEvent($this));
+            $this->dispatcher->dispatch('worker.shutting_down', new WorkerShuttingDownEvent($this));
             $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");
             $this->finished = true;
         }

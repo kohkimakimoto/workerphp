@@ -1,13 +1,13 @@
 <?php
 namespace Kohkimakimoto\Worker\Stats;
 
-use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
+use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Kohkimakimoto\Worker\Foundation\Events;
 
 class StatsEventListener implements EventSubscriberInterface
 {
-    public function detectedStartWorker(StartedWorkerEvent $event)
+    public function detectedWorkerStarted(WorkerStartedEvent $event)
     {
         $worker = $event->getWorker();
 
@@ -24,7 +24,7 @@ class StatsEventListener implements EventSubscriberInterface
     public static function getSubscribedEvents()
     {
         return array(
-            Events::WORKER_STARTED => 'detectedStartWorker',
+            'worker.started' => 'detectedWorkerStarted',
         );
     }
 }

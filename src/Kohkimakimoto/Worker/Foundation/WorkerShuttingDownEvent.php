@@ -1,26 +1,20 @@
 <?php
-namespace Kohkimakimoto\Worker\Job;
+namespace Kohkimakimoto\Worker\Foundation;
 
 use Kohkimakimoto\Worker\Worker;
 use Symfony\Component\EventDispatcher\Event;
 
-class ForkedJobProcessEvent extends Event
+class WorkerShuttingDownEvent extends Event
 {
     private $worker;
 
-    public function __construct(Worker $worker, $job)
+    public function __construct(Worker $worker)
     {
         $this->worker = $worker;
-        $this->job = $job;
     }
 
     public function getWorker()
     {
         return $this->worker;
-    }
-
-    public function getJob()
-    {
-        return $this->job;
     }
 }

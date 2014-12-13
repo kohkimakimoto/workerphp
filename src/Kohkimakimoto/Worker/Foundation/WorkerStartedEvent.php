@@ -4,7 +4,7 @@ namespace Kohkimakimoto\Worker\Foundation;
 use Kohkimakimoto\Worker\Worker;
 use Symfony\Component\EventDispatcher\Event;
 
-class StartedWorkerEvent extends Event
+class WorkerStartedEvent extends Event
 {
     private $worker;
 
