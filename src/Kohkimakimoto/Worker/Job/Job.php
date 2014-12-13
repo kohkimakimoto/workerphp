@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Foundation;
+namespace Kohkimakimoto\Worker\Job;
 
 use Cron\CronExpression;
 use Symfony\Component\Finder\Finder;

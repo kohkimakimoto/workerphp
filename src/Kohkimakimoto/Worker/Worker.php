@@ -37,19 +37,10 @@ class Worker extends Container
         $this["eventLoop"] = Factory::create();
         $this["output"] = new ConsoleOutput();
         $this['dispatcher'] = new EventDispatcher();
-        $this['job'] = new JobManager(
-            $this,
-            $this['dispatcher'],
-            $this['config'],
-            $this['output'],
-            $this['eventLoop']
-        );
 
         if ($this->config->isDebug()) {
             $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
-
-        $this->dispatcher->addSubscriber(new JobEventListener());
 
         // Registers default providers.
         $this->registerDefaultProviders();
@@ -58,7 +49,8 @@ class Worker extends Container
     protected function registerDefaultProviders()
     {
         $providers = [
-            'Kohkimakimoto\Worker\Http\HttpServerServiceProvider',
+            'Kohkimakimoto\Worker\Job\JobServiceProvider',
+            'Kohkimakimoto\Worker\HttpServer\HttpServerServiceProvider',
             'Kohkimakimoto\Worker\Stats\StatsServiceProvider',
         ];
 

@@ -1,6 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Foundation;
-
+namespace Kohkimakimoto\Worker\Job;
 
 /**
  * RuntimJob

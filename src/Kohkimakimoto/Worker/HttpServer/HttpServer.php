@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Http;
+namespace Kohkimakimoto\Worker\HttpServer;
 
 use React\Http\Server as ReactHttpServer;
 use React\Socket\Server as ReactSocketServer;

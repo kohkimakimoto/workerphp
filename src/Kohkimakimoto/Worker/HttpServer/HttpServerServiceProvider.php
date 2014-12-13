@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Http;
+namespace Kohkimakimoto\Worker\HttpServer;
 
 use Kohkimakimoto\Worker\Foundation\ServiceProvider;
 use Kohkimakimoto\Worker\Worker;
@@ -9,7 +9,7 @@ class HttpServerServiceProvider extends ServiceProvider
     public function register(Worker $worker)
     {
         $worker['httpController'] = function ($worker) {
-            return new HttpController(
+            return new HttpServerController(
                 $worker['eventLoop'],
                 $worker['config'],
                 $worker['output'],
@@ -25,6 +25,6 @@ class HttpServerServiceProvider extends ServiceProvider
             );
         };
 
-        $worker->dispatcher->addSubscriber(new HttpEventListener());
+        $worker->dispatcher->addSubscriber(new HttpServerEventListener());
     }
 }

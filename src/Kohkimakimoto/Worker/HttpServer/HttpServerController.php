@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Http;
+namespace Kohkimakimoto\Worker\HttpServer;
 
 use React\Http\ResponseCodes;
 use React\Stream\Stream;
@@ -9,7 +9,7 @@ use Symfony\Component\Routing\RouteCollection;
 use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
-class HttpController
+class HttpServerController
 {
     protected $output;
 

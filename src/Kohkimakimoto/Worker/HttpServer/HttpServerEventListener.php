@@ -1,12 +1,12 @@
 <?php
-namespace Kohkimakimoto\Worker\Http;
+namespace Kohkimakimoto\Worker\HttpServer;
 
-use Kohkimakimoto\Worker\Foundation\ForkedJobProcessEvent;
+use Kohkimakimoto\Worker\Job\ForkedJobProcessEvent;
 use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Kohkimakimoto\Worker\Foundation\Events;
 
-class HttpEventListener implements EventSubscriberInterface
+class HttpServerEventListener implements EventSubscriberInterface
 {
     public function __construct()
     {

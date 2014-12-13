@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker\Foundation;
+namespace Kohkimakimoto\Worker\Job;
 
 use Kohkimakimoto\Worker\Worker;
 use Symfony\Component\EventDispatcher\Event;

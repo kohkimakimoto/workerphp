@@ -1,6 +1,8 @@
 <?php
-namespace Kohkimakimoto\Worker\Foundation;
+namespace Kohkimakimoto\Worker\Job;
 
+use Kohkimakimoto\Worker\Foundation\StartedWorkerEvent;
+use Kohkimakimoto\Worker\Foundation\Events;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class JobEventListener implements EventSubscriberInterface
@@ -12,7 +14,6 @@ class JobEventListener implements EventSubscriberInterface
     public function detectedWorkerStarted(StartedWorkerEvent $event)
     {
         $worker = $event->getWorker();
-
         $worker->job->boot();
     }
 
