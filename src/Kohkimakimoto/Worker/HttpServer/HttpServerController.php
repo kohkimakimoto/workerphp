@@ -31,8 +31,7 @@ class HttpServerController
     {
         $this->routes = new RouteCollection();
         $this->routes->add('index', new Route('/', ['_action' => 'indexAction']));
-        $this->routes->add('jobs', new Route('/jobs', ['_action' => 'jobsAction']));
-        $this->routes->add('job', new Route('/jobs/{name}', ['_action' => 'jobAction']));
+        $this->routes->add('job', new Route('/{name}', ['_action' => 'jobAction']));
     }
 
     public function execute($request, $response)
@@ -73,44 +72,14 @@ class HttpServerController
 
         $jobsList = [];
         foreach ($jobs as $v) {
-            $jobsList[] = [
-                "id" => $v->getId(),
-                "name" => $v->getName(),
-            ];
+            $jobsList[] = $v->toArray();
         }
+
         $contents = [
             "name" => $this->config->getName(),
             "number_of_jobs" => count($jobs),
             "jobs" => $jobsList,
         ];
-
-        $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
-        if ($pretty) {
-            $output = json_encode($contents, JSON_PRETTY_PRINT);
-        } else {
-            $output = json_encode($contents);
-        }
-        $response->end($output);
-        $this->outputAccessLog($request, 200);
-    }
-
-    public function jobsAction($request, $response, $parameters)
-    {
-        $pretty = false;
-        $query = $request->getQuery();
-        if (isset($query['pretty']) && $query['pretty'] && $query['pretty'] != "false") {
-            $pretty = true;
-        }
-
-        $jobs = $this->jobManager->getJobs();
-        $contents = [];
-
-        foreach ($jobs as $job) {
-            $contents[] = [
-                "id" => $job->getId(),
-                "name" => $job->getName(),
-            ];
-        }
 
         $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
         if ($pretty) {

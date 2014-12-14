@@ -116,17 +116,12 @@ class Job
     }
     public function numberOfRuntimeProcesses()
     {
-        $dir = $this->config->getTmpDir();
-        $prefix = $this->prefixOfRunFile();
-
-        $finder = new Finder();
-        $finder
-            ->files()
-            ->in($dir)
-            ->name($prefix.'*')
-            ;
-
-        return count($finder);
+        $info = $this->getInfo();
+        if ($info && isset($info['runtime_jobs'])) {
+            return count($info['runtime_jobs']);
+        } else {
+            return 0;
+        }
     }
 
     public function isLimitOfProcesses()
@@ -184,5 +179,26 @@ class Job
         $dir = $this->config->getTmpDir();
 
         return $dir."/".$this->config->getName().".".$this->getName().".info.json";
+    }
+
+    public function toArray()
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'last_runtime' => $this->lastRunTime->format('Y-m-d H:i:s'),
+            'next_runtime' => $this->nextRunTime->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    public function getInfo()
+    {
+        $path = $this->getInfoFilePath();
+        $contents = file_get_contents($path);
+        if (!$contents) {
+            return null;
+        }
+
+        return json_decode($contents, true);
     }
 }

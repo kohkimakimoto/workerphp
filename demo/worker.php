@@ -5,11 +5,11 @@ date_default_timezone_set('Asia/Tokyo');
 $worker = new \Kohkimakimoto\Worker\Worker(["debug" => true, "tmp_dir" => __DIR__."/tmp"]);
 //$worker = new \Kohkimakimoto\Worker\Worker();
 $worker->httpServer->listen();
-$worker->stats->on(1);
+$worker->stats->on();
 
 $worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
 
-$worker->job("hello", ['cron_time' => '* * * * *', 'max_processes' => 10, 'command' => function(){
+$worker->job("hello", ['cron_time' => '* * * * *', 'max_processes' => 1, 'command' => function(){
     echo "hello\n";
     sleep(10)
 ;}]);

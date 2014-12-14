@@ -14,8 +14,6 @@ class RuntimeJob
 
     protected $runFile;
 
-    protected $numberOfProcesses;
-
     public function __construct($config, $job)
     {
         $this->config = $config;
