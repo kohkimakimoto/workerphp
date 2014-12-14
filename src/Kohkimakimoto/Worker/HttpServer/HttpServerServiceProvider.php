@@ -14,20 +14,11 @@ class HttpServerServiceProvider extends ServiceProvider
             );
         };
 
-        $worker['httpServerController'] = function ($worker) {
-            return new HttpServerController(
-                $worker['eventLoop'],
-                $worker['config'],
-                $worker['output'],
-                $worker['job']
-            );
-        };
-
         $worker['httpServer'] = function ($worker) {
             return new HttpServer(
                 $worker['output'],
                 $worker['eventLoop'],
-                $worker['httpServerController']
+                $worker['httpRouter']
             );
         };
 

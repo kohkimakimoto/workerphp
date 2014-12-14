@@ -10,23 +10,16 @@ use Kohkimakimoto\Worker\Job\JobEvents;
 
 class HttpServerEventListener implements EventSubscriberInterface
 {
-    public function __construct()
-    {
-    }
-
     public function detectedWorkerStarted(WorkerStartedEvent $event)
     {
         $worker = $event->getWorker();
-
         $worker->httpServer->boot();
-        $worker->httpServerController->boot();
     }
 
     public function detectedJobForkedProcess(JobForkedProcessEvent $event)
     {
         $worker = $event->getWorker();
-
-        $worker["httpServer"]->shutdown();
+        $worker->httpServer->shutdown();
     }
 
     public static function getSubscribedEvents()

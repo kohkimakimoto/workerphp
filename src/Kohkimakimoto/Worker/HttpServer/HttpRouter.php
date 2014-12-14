@@ -22,24 +22,12 @@ class HttpRouter
     public function configureRoutes()
     {
         $this->routes = new RouteCollection();
-        $this->routes->add('index', new Route('/', ['_action' => 'indexAction']));
-        $this->routes->add('jobs', new Route('/jobs', ['_action' => 'jobsAction']));
-        $this->routes->add('job', new Route('/jobs/{name}', ['_action' => 'jobAction']));
+        $this->routes->add('index', new Route('/', ['_action' => 'index']));
+        $this->routes->add('job', new Route('/{name}', ['_action' => 'job']));
     }
 
-    public function execute($request, $response)
+    public function getRoutes()
     {
-        $context = new RequestContext($request->getPath(), $request->getMethod());
-        $matcher = new UrlMatcher($this->routes, $context);
-
-        try {
-            $parameters = $matcher->match($request->getPath());
-            $action = $parameters['_action'];
-            call_user_func(array($this, $action), $request, $response, $parameters);
-        } catch (ResourceNotFoundException $e) {
-            $response->writeHead(404, array('Content-Type' => 'text/plain'));
-            $response->end("Not found\n");
-            $this->outputAccessLog($request, 404);
-        }
+        return $this->routes;
     }
 }
