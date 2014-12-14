@@ -110,7 +110,7 @@ class JobManager
             $this->eventLoop->stop();
             unset($this->eventLoop);
 
-            $this->dispatcher->dispatch('job.forked_process', new JobForkedProcessEvent($this->worker, $job));
+            $this->dispatcher->dispatch(JobEvents::FORKED_PROCESS, new JobForkedProcessEvent($this->worker, $job));
 
             // Forks it one more time to prevent to be zombie process.
             $pid = pcntl_fork();

@@ -13,6 +13,7 @@ use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
 use Kohkimakimoto\Worker\Foundation\WorkerShuttingDownEvent;
 use Kohkimakimoto\Worker\Foundation\JobEventListener;
 use Kohkimakimoto\Worker\Foundation\JobManager;
+use Kohkimakimoto\Worker\Foundation\WorkerEvents;
 
 class Worker extends Container
 {
@@ -84,7 +85,7 @@ class Worker extends Container
 
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
-        $this->dispatcher->dispatch('worker.started', new WorkerStartedEvent($this));
+        $this->dispatcher->dispatch(WorkerEvents::STARTED, new WorkerStartedEvent($this));
 
         // A dummy timer to keep a process on a system.
         $this->eventLoop->addPeriodicTimer(10, function () {});
@@ -123,7 +124,7 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-            $this->dispatcher->dispatch('worker.shutting_down', new WorkerShuttingDownEvent($this));
+            $this->dispatcher->dispatch(WorkerEvents::SHUTTING_DOWN, new WorkerShuttingDownEvent($this));
             $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");
             $this->finished = true;
         }
