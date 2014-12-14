@@ -8,7 +8,13 @@ class HttpServerServiceProvider extends ServiceProvider
 {
     public function register(Worker $worker)
     {
-        $worker['httpController'] = function ($worker) {
+        $worker['httpRouter'] = function ($worker) {
+            return new HttpRouter(
+                $worker['eventLoop']
+            );
+        };
+
+        $worker['httpServerController'] = function ($worker) {
             return new HttpServerController(
                 $worker['eventLoop'],
                 $worker['config'],
@@ -21,7 +27,7 @@ class HttpServerServiceProvider extends ServiceProvider
             return new HttpServer(
                 $worker['output'],
                 $worker['eventLoop'],
-                $worker['httpController']
+                $worker['httpServerController']
             );
         };
 
