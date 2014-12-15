@@ -106,7 +106,13 @@ class HttpServer
         } else {
             $color = "red";
         }
-        $this->output->writeln("<info>HTTP ".$request->getMethod().": </info><comment>".$request->getPath()."</comment> <fg=$color>$status ".ResponseCodes::$statusTexts[$status]."</fg=$color>");
+
+        $qs = http_build_query($request->getQuery());
+        if ($qs) {
+            $qs = "?".$qs;
+        }
+
+        $this->output->writeln("<info>HTTP ".$request->getMethod().": </info><comment>".$request->getPath().$qs."</comment> <fg=$color>$status ".ResponseCodes::$statusTexts[$status]."</fg=$color>");
     }
 
     public function shutdown()
