@@ -13,6 +13,8 @@ use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class HttpServer
 {
+    protected $worker;
+
     protected $output;
 
     protected $eventLoop;
@@ -29,8 +31,9 @@ class HttpServer
 
     protected $booted = false;
 
-    public function __construct($output, $eventLoop, $router)
+    public function __construct($worker, $output, $eventLoop, $router)
     {
+        $this->worker = $worker;
         $this->output = $output;
         $this->eventLoop = $eventLoop;
         $this->router = $router;
@@ -62,8 +65,8 @@ class HttpServer
             try {
                 $parameters = $matcher->match($request->getPath());
                 $action = $parameters['_action'];
-                print_r($parameters);
-                // call_user_func(array($this, $action), $request, $response, $parameters);
+                $controller = new HttpController($this->worker, $this, $request, $response);
+                call_user_func(array($controller, $action), $parameters);
             } catch (ResourceNotFoundException $e) {
                 $response->writeHead(404, array('Content-Type' => 'text/plain'));
                 $response->end("Not found\n");
@@ -76,7 +79,7 @@ class HttpServer
         $this->output->writeln("<info>Initializing http server:</info> <comment>http://".$this->host.":".$this->port."/</comment>");
     }
 
-    private function outputAccessLog($request, $status)
+    public function outputAccessLog($request, $status)
     {
         if ($status == 200) {
             $color = "blue";

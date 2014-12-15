@@ -16,6 +16,7 @@ class HttpServerServiceProvider extends ServiceProvider
 
         $worker['httpServer'] = function ($worker) {
             return new HttpServer(
+                $worker,
                 $worker['output'],
                 $worker['eventLoop'],
                 $worker['httpRouter']
