@@ -8,11 +8,8 @@ use Symfony\Component\Process\Process;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Kohkimakimoto\Worker\Foundation\Config;
 use Kohkimakimoto\Worker\EventLoop\Factory;
-use Kohkimakimoto\Worker\Foundation\Events;
 use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
 use Kohkimakimoto\Worker\Foundation\WorkerShuttingDownEvent;
-use Kohkimakimoto\Worker\Foundation\JobEventListener;
-use Kohkimakimoto\Worker\Foundation\JobManager;
 use Kohkimakimoto\Worker\Foundation\WorkerEvents;
 
 class Worker extends Container

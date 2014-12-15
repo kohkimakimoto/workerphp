@@ -1,13 +1,7 @@
 <?php
 namespace Kohkimakimoto\Worker\HttpServer;
 
-use React\Http\ResponseCodes;
 use React\Stream\Stream;
-use Symfony\Component\Routing\Matcher\UrlMatcher;
-use Symfony\Component\Routing\RequestContext;
-use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\Routing\Route;
-use Symfony\Component\Routing\Exception\ResourceNotFoundException;
 
 class HttpController
 {
@@ -25,10 +19,10 @@ class HttpController
         $this->server = $server;
         $this->request = $request;
         $this->response = $response;
-   }
+    }
 
-   public function index($parameters)
-   {
+    public function index($parameters)
+    {
         $pretty = $this->getQueryParameter("pretty", false);
         if ($pretty) {
             $pretty = true;
@@ -56,10 +50,10 @@ class HttpController
         $this->response->writeHead(200, array('Content-Type' => 'text/plain'));
         $this->response->end($output);
         $this->server->outputAccessLog($this->request, 200);
-   }
+    }
 
-   public function job($parameters)
-   {
+    public function job($parameters)
+    {
         $pretty = $this->getQueryParameter("pretty", false);
         if ($pretty) {
             $pretty = true;
@@ -73,6 +67,7 @@ class HttpController
             $this->response->writeHead(404, array('Content-Type' => 'text/plain'));
             $this->response->end("Not found\n");
             $this->server->outputAccessLog($this->request, 404);
+
             return;
         }
 
@@ -109,27 +104,24 @@ class HttpController
                 $response->end($output);
                 $self->server->outputAccessLog($request, 200);
             });
-
         } elseif ($method == 'post') {
-
             $this->worker->job->executeJob($job, true);
 
             $contents = ["status" => "OK"];
             $this->response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
             $this->response->end(json_encode($contents));
             $this->server->outputAccessLog($this->request, 200);
-
         } else {
-
             $this->response->writeHead(400, array('Content-Type' => 'text/plain'));
             $this->response->end("Bad Request\n");
             $this->server->outputAccessLog($this->request, 400);
         }
-   }
+    }
 
-   protected function getQueryParameter($key, $default = null)
-   {
+    protected function getQueryParameter($key, $default = null)
+    {
         $query = $this->request->getQuery();
+
         return isset($query[$key]) ? $query[$key] : $default;
-   }
+    }
 }

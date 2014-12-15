@@ -4,9 +4,6 @@ namespace Kohkimakimoto\Worker\HttpServer;
 use React\Http\Server as ReactHttpServer;
 use React\Socket\Server as ReactSocketServer;
 use React\Http\ResponseCodes;
-use React\Stream\Stream;
-use Symfony\Component\Routing\RouteCollection;
-use Symfony\Component\Routing\Route;
 use Symfony\Component\Routing\Matcher\UrlMatcher;
 use Symfony\Component\Routing\RequestContext;
 use Symfony\Component\Routing\Exception\ResourceNotFoundException;
@@ -58,7 +55,7 @@ class HttpServer
 
         $routes = $this->router->getRoutes();
 
-        $http->on('request', function ($request, $response) use ($routes){
+        $http->on('request', function ($request, $response) use ($routes) {
 
             $context = new RequestContext($request->getPath(), $request->getMethod());
             $matcher = new UrlMatcher($routes, $context);

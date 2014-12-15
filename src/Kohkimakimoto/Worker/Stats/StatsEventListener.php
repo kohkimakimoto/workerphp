@@ -3,7 +3,6 @@ namespace Kohkimakimoto\Worker\Stats;
 
 use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Kohkimakimoto\Worker\Foundation\Events;
 
 class StatsEventListener implements EventSubscriberInterface
 {

@@ -5,7 +5,6 @@ use Kohkimakimoto\Worker\Foundation\WorkerEvents;
 use Kohkimakimoto\Worker\Job\JobForkedProcessEvent;
 use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Kohkimakimoto\Worker\Foundation\Events;
 use Kohkimakimoto\Worker\Job\JobEvents;
 
 class HttpServerEventListener implements EventSubscriberInterface

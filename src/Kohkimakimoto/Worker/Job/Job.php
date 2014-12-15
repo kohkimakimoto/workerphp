@@ -2,7 +2,6 @@
 namespace Kohkimakimoto\Worker\Job;
 
 use Cron\CronExpression;
-use Symfony\Component\Finder\Finder;
 use DateTime;
 
 /**
@@ -196,7 +195,7 @@ class Job
         $path = $this->getInfoFilePath();
         $contents = file_get_contents($path);
         if (!$contents) {
-            return null;
+            return;
         }
 
         return json_decode($contents, true);
@@ -255,5 +254,4 @@ class Job
         }
         fclose($fp);
     }
-
 }
