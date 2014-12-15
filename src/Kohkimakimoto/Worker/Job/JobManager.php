@@ -81,8 +81,6 @@ class JobManager
             $output->writeln("[debug] Try running a job: $name at ".$now->format('Y-m-d H:i:s'));
         }
 
-        $runtimeJob = $job->makeRuntimeJob();
-
         $pid = pcntl_fork();
         if ($pid === -1) {
             // Error
@@ -130,13 +128,8 @@ class JobManager
                 exit;
             }
 
-            $runtimeJob->createRunFileWithPid(posix_getpid());
-            if ($output->isDebug()) {
-                $output->writeln("[debug] Create run file '".$runtimeJob->getRunFile()."' for running job: $name");
-            }
-
             $output->writeln("<info>Runs job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".(new \DateTime())->format('Y-m-d H:i:s'));
-            $runtimeJob->addEntryToJobInfo();
+            $job->addRuntimeEntryToJobInfo($pid);
 
             $command = $job->getCommand();
             if ($command instanceof \Closure) {
@@ -154,13 +147,7 @@ class JobManager
                 throw new \RuntimeException("Unsupported operation.");
             }
 
-            $file = $runtimeJob->getRunFile();
-            $runtimeJob->removeRunFile();
-            if ($output->isDebug()) {
-                $output->writeln("[debug] Removed run file '".$file."'. Finished the job: $name");
-            }
-
-            $runtimeJob->deleteEntryToJobInfo();
+            $job->deleteRuntimeEntryToJobInfo($pid);
             $output->writeln("<info>Finished job:</info> <comment>$name</comment> (pid: ".posix_getpid().") at ".(new \DateTime())->format('Y-m-d H:i:s'));
 
             exit;

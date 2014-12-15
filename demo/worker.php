@@ -7,11 +7,11 @@ $worker = new \Kohkimakimoto\Worker\Worker(["debug" => true, "tmp_dir" => __DIR_
 $worker->httpServer->listen();
 $worker->stats->on();
 
-$worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
+//$worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
 
 $worker->job("hello", ['cron_time' => '* * * * *', 'max_processes' => 1, 'command' => function(){
     echo "hello\n";
-    sleep(10)
+    sleep(100)
 ;}]);
 
 $worker->start();
