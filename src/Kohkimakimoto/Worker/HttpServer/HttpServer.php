@@ -44,9 +44,9 @@ class HttpServer
         $this->host = $host;
     }
 
-    public function addAPIKey($apiKey, $description = null)
+    public function setAPIKey($apiKey)
     {
-        $this->apiKeys[$apiKey] = $description;
+        $this->apiKeys[$apiKey] = true;
     }
 
     public function getAPIKeys()

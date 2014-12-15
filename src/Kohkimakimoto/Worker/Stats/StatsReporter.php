@@ -9,7 +9,7 @@ class StatsReporter
 
     protected $bootTime;
 
-    public function on($interval = 60)
+    public function on($interval = 300)
     {
         $this->on = true;
         $this->interval = $interval;
