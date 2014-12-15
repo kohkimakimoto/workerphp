@@ -170,14 +170,16 @@ $ curl -XPGET http://localhost:8080/?pretty=1
     "jobs": [
         {
             "id": 0,
-            "name": "hello"
+            "name": "hello",
+            "max_processes": 1,
             "last_runtime": "2014-12-15 15:55:38",
             "next_runtime": "2014-12-15 15:56:00",
             "arguments": []
         },
         {
             "id": 1,
-            "name": "uptime"
+            "name": "uptime",
+            "max_processes": 1,
             "last_runtime": "2014-12-15 15:55:38",
             "next_runtime": "2014-12-15 15:56:00",
             "arguments": []
