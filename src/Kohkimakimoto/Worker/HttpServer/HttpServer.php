@@ -22,6 +22,8 @@ class HttpServer
 
     protected $http;
 
+    protected $apiKeys = [];
+
     protected $socket;
 
     protected $router;
@@ -42,6 +44,16 @@ class HttpServer
         $this->host = $host;
     }
 
+    public function addAPIKey($apiKey, $description = null)
+    {
+        $this->apiKeys[$apiKey] = $description;
+    }
+
+    public function getAPIKeys()
+    {
+        return $this->apiKeys;
+    }
+
     public function boot()
     {
         if (!$this->port) {
@@ -56,6 +68,17 @@ class HttpServer
         $routes = $this->router->getRoutes();
 
         $http->on('request', function ($request, $response) use ($routes) {
+
+            // check api key.
+            if (count($this->apiKeys) > 0) {
+                $query = $request->getQuery();
+                if (!isset($query['apiKey']) || !isset($this->apiKeys[$query['apiKey']])) {
+                    $response->writeHead(401, array('Content-Type' => 'text/plain'));
+                    $response->end("Unauthorized\n");
+                    $this->outputAccessLog($request, 401);
+                    return;
+                }
+            }
 
             $context = new RequestContext($request->getPath(), $request->getMethod());
             $matcher = new UrlMatcher($routes, $context);
