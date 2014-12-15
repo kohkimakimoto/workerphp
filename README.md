@@ -32,7 +32,7 @@ $worker->start();
 
 ## Installation
 
-Create `composer.json` for installing via composer. 
+Create `composer.json` for installing via composer.
 
 ```json
 {
@@ -91,7 +91,9 @@ $worker->job("hello", ['cron_time' => '* * * * *', 'command' => function(){
 }]);
 ```
 
-This is a job definition. `$worker->job` method has two arguments. The first is a name of job. It must be unique in all jobs. The second is an array that has some parameters for the job. `cron_time` is a schedule when to run the job. It is a "cron expressions" string. `command` is a closure that is executed by the worker.
+This `$worker->job` method has two arguments. The first argument is name of job. It must be unique in all jobs.
+The second argument is an array that has some parameters. `cron_time` is a schedule when to run the job.
+It is a "cron expressions" string. `command` is a closure that is executed by the worker.
 
 You can run it. You will get messages like the below.
 
@@ -101,11 +103,14 @@ Starting WorkerPHP.
 Initializing job: hello (job_id: 0)
 Successfully booted. Quit working with CONTROL-C.
 Running job: hello (pid: 36643) at 2014-12-08 14:56:00
-hello
+Hello world
+Finished job: hello (pid: 36643) at 2014-12-08 14:56:00
 Running job: hello (pid: 36646) at 2014-12-08 14:57:00
-hello
+Hello world
+Finished job: hello (pid: 36646) at 2014-12-08 14:57:00
 Running job: hello (pid: 36647) at 2014-12-08 14:58:00
-hello
+Hello world
+Finished job: hello (pid: 36647) at 2014-12-08 14:58:00
 ```
 
 The job you defined runs every minute.
@@ -121,8 +126,25 @@ The worker runs command `uptime` every minute.
 ```
 Running job: uptime (pid: 36650) at 2014-12-04 12:37:00
 12:37  up 8 days, 16:06, 6 users, load averages: 1.82 1.74 1.83
-Running job: uptime (pid: 36651) at 2014-12-04 12:38:00
-12:38  up 8 days, 16:07, 6 users, load averages: 1.68 1.72 1.81
+Finished job: uptime (pid: 36650) at 2014-12-04 12:37:00
+```
+
+
+You can set a limit on running processes at the same time. Use `max_processes`.
+
+```php
+$worker->job("hello", ['cron_time' => '* * * * *', 'max_processes' => 1, 'command' => function(){
+    echo "Hello world\n";
+    sleep(70);
+;}]);
+```
+
+```
+$ php worker.php
+...
+Runs job: hello (pid: 90621) at 2014-12-16 08:03:00
+Hello world
+Skip the job 'hello' due to limit of max processes: 1 at 2014-12-16 08:04:00
 ```
 
 ### Http Server (Web APIs)
