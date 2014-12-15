@@ -7,7 +7,7 @@ use \Kohkimakimoto\Worker\Worker;
 $worker = new Worker(["debug" => true, "tmp_dir" => __DIR__."/tmp"]);
 //$worker = new \Kohkimakimoto\Worker\Worker();
 $worker->httpServer->listen();
-$worker->stats->on();
+$worker->stats->on(2);
 
 //$worker->job("uptime", ['cron_time' => '* * * * *', 'command' => "uptime"]);
 

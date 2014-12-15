@@ -14,7 +14,8 @@ class StatsEventListener implements EventSubscriberInterface
             $worker->eventLoop->addPeriodicTimer($worker->stats->getInterval(), function () use ($worker) {
 
                 $mem = memory_get_usage();
-                $worker->output->writeln("<info>Stats report:</info> memory_usage: <comment>$mem</comment> bytes at ".(new \DateTime())->format('Y-m-d H:i:s'));
+                $memM = round(($mem / 1024 / 1024), 1);
+                $worker->output->writeln("<info>Stats report:</info> memory_usage: <comment>$mem</comment> bytes ($memM MB) at ".(new \DateTime())->format('Y-m-d H:i:s'));
 
             });
         }
