@@ -67,7 +67,6 @@ class HttpController
             $this->response->writeHead(404, array('Content-Type' => 'text/plain'));
             $this->response->end("Not found\n");
             $this->server->outputAccessLog($this->request, 404);
-
             return;
         }
 
@@ -91,8 +90,6 @@ class HttpController
                 }
 
                 $contents = [];
-                $contents['id'] = $job->getId();
-                $contents['name'] = $job->getName();
                 $contents['number_of_running_jobs'] = $number;
 
                 $response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
@@ -105,7 +102,8 @@ class HttpController
                 $self->server->outputAccessLog($request, 200);
             });
         } elseif ($method == 'post') {
-            $this->worker->job->executeJob($job, true);
+            $query = $this->request->getQuery();
+            $this->worker->job->executeJob($job, true, $query);
 
             $contents = ["status" => "OK"];
             $this->response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));

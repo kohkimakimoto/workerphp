@@ -63,6 +63,7 @@ class Job
         if ($this->cronTime) {
             $this->cronExpression = CronExpression::factory($this->cronTime);
         }
+
     }
 
     public function getName()
@@ -182,11 +183,30 @@ class Job
 
     public function toArray()
     {
+        $arguments = array();
+        $parameters = $this->getCommandParameters();
+        if ($parameters) {
+            foreach ($parameters as $parameter) {
+                $class = $parameter->getClass();
+                if ($class && $class->getName() === 'Kohkimakimoto\Worker\Worker') {
+                    continue;
+                }
+
+                $isOptional = $parameter->isOptional();
+                if (!$isOptional) {
+                    $arguments[] = ['name' => $parameter->getName(), 'required' => true];
+                } else {
+                    $arguments[] = ['name' => $parameter->getName(), 'required' => false];
+                }
+            }
+        }
+
         return [
             'id' => $this->id,
             'name' => $this->name,
             'last_runtime' => $this->lastRunTime->format('Y-m-d H:i:s'),
             'next_runtime' => $this->nextRunTime->format('Y-m-d H:i:s'),
+            'arguments' => $arguments,
         ];
     }
 
@@ -253,5 +273,15 @@ class Job
             throw new \RuntimeException("Coundn't have a lock form $path");
         }
         fclose($fp);
+    }
+
+    public function getCommandParameters()
+    {
+        $parameters = array();
+        if ($this->command instanceof \Closure) {
+            $reflection = new \ReflectionFunction($this->command);
+            $parameters = $reflection->getParameters();
+        }
+        return $parameters;
     }
 }

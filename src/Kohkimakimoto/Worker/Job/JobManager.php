@@ -69,7 +69,7 @@ class JobManager
         }
     }
 
-    public function executeJob($job, $oneTime = false)
+    public function executeJob($job, $oneTime = false, $passdArguments = array())
     {
         $id = $job->getId();
         $name = $job->getName();
@@ -134,7 +134,28 @@ class JobManager
             $command = $job->getCommand();
             if ($command instanceof \Closure) {
                 // command is a closure
-                call_user_func($command, $this->worker);
+                $arguments = array();
+                $parameters = $job->getCommandParameters();
+                if ($parameters) {
+                    foreach ($parameters as $parameter) {
+                        $class = $parameter->getClass();
+                        if ($class && $class->getName() === 'Kohkimakimoto\Worker\Worker') {
+                            $arguments[] = $this->worker;
+                            continue;
+                        }
+
+                        $argName = $parameter->getName();
+                        if (isset($passdArguments[$argName])) {
+                            $arguments[] = $passdArguments[$argName];
+                        } else {
+                            $isOptional = $parameter->isOptional();
+                            if (!$isOptional) {
+                                $arguments[] = null;
+                            }
+                        }
+                    }
+                }
+                call_user_func_array($command, $arguments);
             } elseif (is_string($command)) {
                 // command is a string
                 $process = new Process($command);
