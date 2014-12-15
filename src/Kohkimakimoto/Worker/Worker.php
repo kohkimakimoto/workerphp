@@ -5,26 +5,20 @@ use Pimple\Container;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Output\ConsoleOutput;
 use Symfony\Component\Process\Process;
+use Symfony\Component\EventDispatcher\EventDispatcher;
+use Kohkimakimoto\Worker\Foundation\Config;
 use Kohkimakimoto\Worker\EventLoop\Factory;
+use Kohkimakimoto\Worker\Foundation\WorkerStartedEvent;
+use Kohkimakimoto\Worker\Foundation\WorkerShuttingDownEvent;
+use Kohkimakimoto\Worker\Foundation\WorkerEvents;
 
-/**
- * Worker
- */
 class Worker extends Container
 {
-    protected $output;
-
-    protected $eventLoop;
-
-    protected $httpServerPort;
-
-    protected $httpServerHost;
-
-    protected $providers = [];
+    protected $masterPid;
 
     protected $finished;
 
-    protected $masterPid;
+    protected $providers = [];
 
     /**
      * Constructor.
@@ -36,18 +30,17 @@ class Worker extends Container
         $this->masterPid = posix_getpid();
         $this->finished = false;
 
-        $this["event_loop"] = Factory::create();
+        // Registers fundamental instances.
+        $this['config'] = new Config($config);
+        $this["eventLoop"] = Factory::create();
         $this["output"] = new ConsoleOutput();
-        $this["config"] = new Config($config);
-
-        $this->output = $this["output"];
-        $this->eventLoop = $this["event_loop"];
-        $this->config = $this["config"];
+        $this['dispatcher'] = new EventDispatcher();
 
         if ($this->config->isDebug()) {
             $this->output->setVerbosity(OutputInterface::VERBOSITY_DEBUG);
         }
 
+        // Registers default providers.
         $this->registerDefaultProviders();
     }
 
@@ -55,7 +48,8 @@ class Worker extends Container
     {
         $providers = [
             'Kohkimakimoto\Worker\Job\JobServiceProvider',
-            'Kohkimakimoto\Worker\Http\HttpServerServiceProvider',
+            'Kohkimakimoto\Worker\HttpServer\HttpServerServiceProvider',
+            'Kohkimakimoto\Worker\Stats\StatsServiceProvider',
         ];
 
         foreach ($providers as $provider) {
@@ -88,14 +82,12 @@ class Worker extends Container
 
         $this->output->writeln("<info>Starting <comment>".$this->config->getName()."</comment>.</info>");
 
-        foreach ($this->providers as $provider) {
-            $provider->start($this);
-        }
-
-        $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
+        $this->dispatcher->dispatch(WorkerEvents::STARTED, new WorkerStartedEvent($this));
 
         // A dummy timer to keep a process on a system.
         $this->eventLoop->addPeriodicTimer(10, function () {});
+
+        $this->output->writeln('<info>Successfully booted. Quit working with CONTROL-C.</info>');
 
         // Start event loop.
         $this->eventLoop->run();
@@ -129,10 +121,7 @@ class Worker extends Container
     {
         if ($this->masterPid === posix_getpid() && !$this->finished) {
             // only master process.
-            foreach ($this->providers as $provider) {
-                $provider->shutdown($this);
-            }
-
+            $this->dispatcher->dispatch(WorkerEvents::SHUTTING_DOWN, new WorkerShuttingDownEvent($this));
             $this->output->writeln("<info>Shutdown <comment>".$this->config->getName()."</comment>.</info>");
             $this->finished = true;
         }
@@ -141,13 +130,6 @@ class Worker extends Container
     public function job($name, $command)
     {
         $this->job->register($name, $command);
-
-        return $this;
-    }
-
-    public function httpServer($port, $host = '127.0.0.1')
-    {
-        $this->httpServer->bind($port, $host);
 
         return $this;
     }

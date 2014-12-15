@@ -1,5 +1,6 @@
 /vendor
 /tmp
+/demo
 /composer.phar
 /.project
 /build

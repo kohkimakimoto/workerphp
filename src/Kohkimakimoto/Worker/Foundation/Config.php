@@ -1,5 +1,5 @@
 <?php
-namespace Kohkimakimoto\Worker;
+namespace Kohkimakimoto\Worker\Foundation;
 
 class Config
 {
@@ -11,7 +11,7 @@ class Config
 
     protected $tmpDir;
 
-    public function __construct($config)
+    public function __construct($config = array())
     {
         if (isset($config["name"])) {
             $this->name = $config["name"];

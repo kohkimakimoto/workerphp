@@ -50,6 +50,12 @@ $ composer install
 
 ## Usage
 
+* [Bootstrap](#bootstrap)
+* [Jobs](#jobs)
+* [Http Server (Web APIs)](#http-server-web-apis)
+
+### Bootstrap
+
 To make a job scheduler application like cron, create `worker.php` file (or other name you want).
 You need to load composer `autoload.php` file and create an instance of `Kohkimakimoto\Worker\Worker`.
 
@@ -59,6 +65,8 @@ You need to load composer `autoload.php` file and create an instance of `Kohkima
 require_once __DIR__.'/vendor/autoload.php';
 
 $worker = new \Kohkimakimoto\Worker\Worker();
+
+// ... job definitions
 
 $worker->start();
 ```
@@ -71,7 +79,11 @@ Starting WorkerPHP.
 Successfully booted. Quit working with CONTROL-C.
 ```
 
-Define a job before line of `$worker->start()`.
+Learn about jobs at the next section.
+
+### Jobs
+
+Define a job.
 
 ```php
 $worker->job("hello", ['cron_time' => '* * * * *', 'command' => function(){
@@ -111,6 +123,45 @@ Running job: uptime (pid: 36650) at 2014-12-04 12:37:00
 12:37  up 8 days, 16:06, 6 users, load averages: 1.82 1.74 1.83
 Running job: uptime (pid: 36651) at 2014-12-04 12:38:00
 12:38  up 8 days, 16:07, 6 users, load averages: 1.68 1.72 1.81
+```
+
+### Http Server (Web APIs)
+
+WorkerPHP has a built-in http server. It provides APIs that controls jobs using HTTP requests. Write the following code.
+
+```php
+$worker = new \Kohkimakimoto\Worker\Worker();
+$worker->httpServer->listen();
+
+// ...
+
+$worker->start();
+```
+
+When WorkerPHP starts, It listens port `8080`. You can get infomation using http request.
+
+```
+$ curl -XPGET http://localhost:8080/?pretty=1
+{
+    "name": "WorkerPHP",
+    "number_of_jobs": 2,
+    "jobs": [
+        {
+            "id": 0,
+            "name": "hello"
+            "last_runtime": "2014-12-15 15:55:38",
+            "next_runtime": "2014-12-15 15:56:00",
+            "arguments": []
+        },
+        {
+            "id": 1,
+            "name": "uptime"
+            "last_runtime": "2014-12-15 15:55:38",
+            "next_runtime": "2014-12-15 15:56:00",
+            "arguments": []
+        }
+    ]
+}
 ```
 
 ## Author

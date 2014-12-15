@@ -2,7 +2,6 @@
 namespace Kohkimakimoto\Worker\Job;
 
 use Cron\CronExpression;
-use Symfony\Component\Finder\Finder;
 use DateTime;
 
 /**
@@ -57,7 +56,6 @@ class Job
             } else {
                 $this->maxProcesses = false;
             }
-
         } else {
             throw new \InvalidArgumentException("Unsupported type of 'command'.");
         }
@@ -65,6 +63,7 @@ class Job
         if ($this->cronTime) {
             $this->cronExpression = CronExpression::factory($this->cronTime);
         }
+
     }
 
     public function getName()
@@ -90,7 +89,11 @@ class Job
 
     public function updateNextRunTime()
     {
-        $this->nextRunTime = $this->cronExpression->getNextRunDate($this->lastRunTime);
+        // prevent to set same time.
+        $lastRunTime = clone $this->lastRunTime;
+        $lastRunTime->modify('+5 second');
+
+        $this->nextRunTime = $this->cronExpression->getNextRunDate($lastRunTime);
     }
 
     public function secondsUntilNextRuntime($from = null)
@@ -113,17 +116,12 @@ class Job
     }
     public function numberOfRuntimeProcesses()
     {
-        $dir = $this->config->getTmpDir();
-        $prefix = $this->prefixOfRunFile();
-
-        $finder = new Finder();
-        $finder
-            ->files()
-            ->in($dir)
-            ->name($prefix.'*')
-            ;
-
-        return count($finder);
+        $info = $this->getInfo();
+        if ($info && isset($info['runtime_jobs'])) {
+            return count($info['runtime_jobs']);
+        } else {
+            return 0;
+        }
     }
 
     public function isLimitOfProcesses()
@@ -163,5 +161,127 @@ class Job
     public function prefixOfRunFile()
     {
         return $this->config->getName().".job.".$this->getName().".";
+    }
+
+    public function initInfoFile()
+    {
+        $file = $this->getInfoFilePath();
+
+        if (file_exists($file)) {
+            unlink($file);
+        }
+
+        file_put_contents($file, '{}');
+    }
+
+    public function getInfoFilePath()
+    {
+        $dir = $this->config->getTmpDir();
+
+        return $dir."/".$this->config->getName().".".$this->getName().".info.json";
+    }
+
+    public function toArray()
+    {
+        $arguments = array();
+        $parameters = $this->getCommandParameters();
+        if ($parameters) {
+            foreach ($parameters as $parameter) {
+                $class = $parameter->getClass();
+                if ($class && $class->getName() === 'Kohkimakimoto\Worker\Worker') {
+                    continue;
+                }
+
+                $isOptional = $parameter->isOptional();
+                if (!$isOptional) {
+                    $arguments[] = ['name' => $parameter->getName(), 'required' => true];
+                } else {
+                    $arguments[] = ['name' => $parameter->getName(), 'required' => false];
+                }
+            }
+        }
+
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'last_runtime' => $this->lastRunTime->format('Y-m-d H:i:s'),
+            'next_runtime' => $this->nextRunTime->format('Y-m-d H:i:s'),
+            'arguments' => $arguments,
+        ];
+    }
+
+    public function getInfo()
+    {
+        $path = $this->getInfoFilePath();
+        $contents = file_get_contents($path);
+        if (!$contents) {
+            return;
+        }
+
+        return json_decode($contents, true);
+    }
+
+    public function addRuntimeEntryToJobInfo($pid)
+    {
+        clearstatcache();
+
+        $path = $this->getInfoFilePath();
+        if (!file_exists($path)) {
+            throw new \RuntimeException("$path not found");
+        }
+
+        $fp = fopen($path, "ab+");
+        if (flock($fp, LOCK_EX)) {
+            $contents = fread($fp, filesize($path));
+            $info = json_decode($contents, true);
+            if (!$info) {
+                $info = ["runtime_jobs" => []];
+            }
+            $info["runtime_jobs"]["job.".$pid] = ["pid" => $pid];
+            $contents = json_encode($info, JSON_PRETTY_PRINT);
+            ftruncate($fp, 0);
+            fwrite($fp, $contents);
+        } else {
+            throw new \RuntimeException("Coundn't have a lock form $path");
+        }
+        fclose($fp);
+    }
+
+    public function deleteRuntimeEntryToJobInfo($pid)
+    {
+        clearstatcache();
+
+        $path = $this->getInfoFilePath();
+        if (!file_exists($path)) {
+            throw new \RuntimeException("$path not found");
+        }
+
+        $fp = fopen($path, "ab+");
+        if (flock($fp, LOCK_EX)) {
+            $contents = fread($fp, filesize($path));
+            $info = json_decode($contents, true);
+            if (!$info) {
+                $info = ["runtime_jobs" => []];
+            }
+            if (isset($info["runtime_jobs"]["job.".$pid])) {
+                unset($info["runtime_jobs"]["job.".$pid]);
+                $contents = json_encode($info, JSON_PRETTY_PRINT);
+            }
+            ftruncate($fp, 0);
+            fwrite($fp, $contents);
+        } else {
+            throw new \RuntimeException("Coundn't have a lock form $path");
+        }
+        fclose($fp);
+    }
+
+    public function getCommandParameters()
+    {
+        $parameters = array();
+        if ($this->command instanceof \Closure) {
+            $reflection = new \ReflectionFunction($this->command);
+            $parameters = $reflection->getParameters();
+        }
+        return $parameters;
     }
 }
