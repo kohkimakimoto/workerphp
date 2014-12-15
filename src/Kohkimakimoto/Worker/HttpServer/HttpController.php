@@ -47,7 +47,7 @@ class HttpController
             $output = json_encode($contents);
         }
 
-        $this->response->writeHead(200, array('Content-Type' => 'text/plain'));
+        $this->response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
         $this->response->end($output);
         $this->server->outputAccessLog($this->request, 200);
     }
