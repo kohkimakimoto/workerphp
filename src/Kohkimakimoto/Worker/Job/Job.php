@@ -63,7 +63,6 @@ class Job
         if ($this->cronTime) {
             $this->cronExpression = CronExpression::factory($this->cronTime);
         }
-
     }
 
     public function getName()
@@ -283,6 +282,7 @@ class Job
             $reflection = new \ReflectionFunction($this->command);
             $parameters = $reflection->getParameters();
         }
+
         return $parameters;
     }
 }

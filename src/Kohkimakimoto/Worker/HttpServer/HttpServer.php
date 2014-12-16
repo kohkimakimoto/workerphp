@@ -76,6 +76,7 @@ class HttpServer
                     $response->writeHead(401, array('Content-Type' => 'text/plain'));
                     $response->end("Unauthorized\n");
                     $this->outputAccessLog($request, 401);
+
                     return;
                 }
             }

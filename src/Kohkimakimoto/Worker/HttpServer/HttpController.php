@@ -67,6 +67,7 @@ class HttpController
             $this->response->writeHead(404, array('Content-Type' => 'text/plain'));
             $this->response->end("Not found\n");
             $this->server->outputAccessLog($this->request, 404);
+
             return;
         }
 

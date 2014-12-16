@@ -41,6 +41,7 @@ class StatsReporter
             $date = new \DateTime();
         }
         $uptime = $date->getTimestamp() - $this->bootTime->getTimestamp();
+
         return $uptime;
     }
 }
