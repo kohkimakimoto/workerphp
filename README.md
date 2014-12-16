@@ -23,8 +23,6 @@ $worker->job("uptime", ['cron_time' => '10 * * * *', 'command' => "uptime"]);
 $worker->start();
 ```
 
-***This software is in development stage! You shouldn't use it in your real products.***
-
 ## Requirements
 
 * PHP5.4 or later
@@ -238,8 +236,6 @@ You will get below json.
 ### Service Providers
 
 ServiceProvider allow the user to extend WorkerPHP. Please see the built-in Service Provider `StatsServiceProvider`.
-
-
 
 ## Author
 
