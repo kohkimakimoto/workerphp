@@ -107,7 +107,13 @@ class HttpController
 
             $contents = ["status" => "OK"];
             $this->response->writeHead(200, array('Content-Type' => 'application/json; charset=utf-8'));
-            $this->response->end(json_encode($contents));
+            if ($pretty) {
+                $output = json_encode($contents, JSON_PRETTY_PRINT);
+            } else {
+                $output = json_encode($contents);
+            }
+
+            $this->response->end($output);
             $this->server->outputAccessLog($this->request, 200);
         } else {
             $this->response->writeHead(400, array('Content-Type' => 'text/plain'));

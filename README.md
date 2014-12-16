@@ -53,6 +53,7 @@ $ composer install
 * [Bootstrap](#bootstrap)
 * [Jobs](#jobs)
 * [Http Server (Web APIs)](#http-server-web-apis)
+* [Service Providers](#service-providers)
 
 ### Bootstrap
 
@@ -160,10 +161,24 @@ $worker->httpServer->listen();
 $worker->start();
 ```
 
-When WorkerPHP starts, It listens port `8080`. You can get infomation using http request.
+When WorkerPHP starts, It listens port `8080` (default).
+You can modify listened port and host.
+
+```php
+$worker->httpServer->listen(8888, 'localhost');
+```
+
+#### Get a worker info
+
+If you started http server, you can get worker infomation using http request.
 
 ```
-$ curl -XPGET http://localhost:8080/?pretty=1
+$ curl -XGET http://localhost:8080/?pretty=1
+```
+
+You will get below json.
+
+```
 {
     "name": "WorkerPHP",
     "number_of_jobs": 2,
@@ -187,6 +202,40 @@ $ curl -XPGET http://localhost:8080/?pretty=1
     ]
 }
 ```
+
+#### Get a job info
+
+You can get a job info by specifing job name.
+
+```
+$ curl -XGET http://localhost:8080/hello?pretty=1
+```
+
+You will get below json.
+
+```
+{
+    "number_of_running_jobs": 0
+}
+```
+
+#### Run a job
+
+You can run a job using POST request.
+
+```
+$ curl -XPOST http://localhost:8080/hello?pretty=1
+```
+
+You will get below json.
+
+```
+{
+    "status": "OK"
+}
+```
+
+### Service Providers
 
 ## Author
 
