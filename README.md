@@ -237,6 +237,10 @@ You will get below json.
 
 ### Service Providers
 
+ServiceProvider allow the user to extend WorkerPHP. Please see the built-in Service Provider `StatsServiceProvider`.
+
+
+
 ## Author
 
 Kohki Makimoto <kohki.makimoto@gmail.com>
