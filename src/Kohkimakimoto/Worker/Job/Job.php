@@ -204,6 +204,7 @@ class Job
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'max_processes' => $this->maxProcesses,
             'last_runtime' => $this->lastRunTime->format('Y-m-d H:i:s'),
             'next_runtime' => $this->nextRunTime->format('Y-m-d H:i:s'),
             'arguments' => $arguments,

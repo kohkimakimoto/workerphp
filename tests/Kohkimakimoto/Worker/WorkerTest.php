@@ -5,7 +5,8 @@ use Kohkimakimoto\Worker\Worker;
 
 class WorkerTest extends \PHPUnit_Framework_TestCase
 {
-    public function testDefault()
+    public function testCreateInstance()
     {
+        $worker = new Worker();
     }
 }
