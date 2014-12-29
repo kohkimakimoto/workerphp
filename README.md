@@ -26,7 +26,7 @@ $worker->start();
 ## Requirements
 
 * PHP5.4 or later
-* pcntl extention
+* [pcntl extension](http://php.net/pcntl)
 
 ## Installation
 
